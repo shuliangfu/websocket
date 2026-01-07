@@ -25,8 +25,6 @@
  * ```
  */
 
-/// <reference lib="dom" />
-
 /**
  * WebSocket 客户端配置选项
  */
