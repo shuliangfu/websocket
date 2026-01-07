@@ -20,11 +20,6 @@
       "**/tests/**"
     ]
   },
-  "compilerOptions": {
-    "lib": [
-      "deno.window"
-    ]
-  },
   "lint": {
     "include": [
       "src/"
