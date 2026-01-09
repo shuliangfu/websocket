@@ -1,8 +1,13 @@
 # @dreamer/websocket
 
-一个用于 Deno 的 WebSocket 工具库，提供 WebSocket 服务器功能，支持实时双向通信。
+> 一个兼容 Deno 和 Bun 的 WebSocket 工具库，提供 WebSocket 服务器功能，支持实时双向通信
 
-## 功能
+[![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## 🎯 功能
 
 WebSocket 工具库，用于构建实时通信应用、推送服务、在线协作等场景。
 
@@ -10,7 +15,7 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
 
 ### WebSocket 服务器
 
-- **基于 Deno WebSocket API**：原生 WebSocket 服务器支持
+- **跨运行时 WebSocket API**：兼容 Deno 和 Bun 的原生 WebSocket 服务器支持
 - **连接管理**：
   - 连接建立和关闭处理
   - 连接状态追踪
@@ -59,10 +64,6 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
 - **监控和日志**：实时日志流、系统监控、性能指标
 - **IoT 应用**：设备控制、数据采集、远程监控
 
-## 优先级
-
-⭐⭐
-
 ## 安装
 
 ```bash
@@ -71,12 +72,14 @@ deno add jsr:@dreamer/websocket
 
 ## 环境兼容性
 
-- **Deno 版本**：要求 Deno 2.5 或更高版本
-- **服务端**：✅ 支持（Deno 运行时，WebSocket 服务器功能，基于 Deno.upgradeWebSocket）
+- **运行时要求**：Deno 2.5+ 或 Bun 1.0+
+- **服务端**：✅ 支持（兼容 Deno 和 Bun 运行时，WebSocket 服务器功能）
 - **客户端**：✅ 支持（浏览器环境，通过 `jsr:@dreamer/websocket/client` 使用 WebSocket 客户端功能）
 - **依赖**：@dreamer/middleware（用于中间件系统，服务端 WebSocket 服务器）
 
-## 使用示例
+---
+
+## 🚀 快速开始
 
 ### WebSocket 服务器
 
@@ -389,77 +392,9 @@ io.on("connection", (socket) => {
 });
 ```
 
-### 完整示例：聊天应用（类似 socket.io）
+---
 
-```typescript
-import { Server } from "jsr:@dreamer/websocket";
-
-const io = new Server({
-  port: 8080,
-  path: "/socket.io",
-});
-
-// 用户认证中间件（类似 socket.io 的 middleware）
-io.use(async (socket, next) => {
-  const token = socket.handshake.query.token;
-  if (!token) {
-    return next(new Error("需要认证"));
-  }
-  socket.data.user = await authenticateUser(token);
-  next();
-});
-
-io.on("connection", (socket) => {
-  console.log(`用户 ${socket.data.user.name} 连接`);
-
-  // 加入聊天室（类似 socket.io 的 join）
-  socket.on("join-chat", (roomId, callback) => {
-    socket.join(roomId);
-    // 通知房间内其他用户（类似 socket.io 的 to().emit()）
-    socket.to(roomId).emit("user-joined", {
-      user: socket.data.user.name,
-    });
-
-    // 消息确认
-    if (callback) {
-      callback({ status: "success" });
-    }
-  });
-
-  // 发送消息（类似 socket.io 的 emit）
-  socket.on("chat-message", (data, callback) => {
-    const { roomId, message } = data;
-    // 广播到房间（类似 socket.io 的 to().emit()）
-    socket.to(roomId).emit("chat-message", {
-      user: socket.data.user.name,
-      message: message,
-      timestamp: Date.now(),
-    });
-
-    // 消息确认
-    if (callback) {
-      callback({ status: "success" });
-    }
-  });
-
-  // 离开聊天室（类似 socket.io 的 leave）
-  socket.on("leave-chat", (roomId) => {
-    socket.leave(roomId);
-    socket.to(roomId).emit("user-left", {
-      user: socket.data.user.name,
-    });
-  });
-
-  // 断开连接
-  socket.on("disconnect", (reason) => {
-    console.log(`用户 ${socket.data.user.name} 断开连接:`, reason);
-  });
-});
-
-await io.listen();
-```
-
-## 客户端支持
+## 🌐 客户端支持
 
 WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
 
@@ -495,19 +430,35 @@ WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
 
 ### 与 socket.io 的主要区别
 
-- **基于 Deno**：原生支持 Deno 运行时，无需 Node.js
+- **跨运行时支持**：原生支持 Deno 和 Bun 运行时，无需 Node.js
 - **更轻量**：不依赖 socket.io 的复杂协议，基于标准 WebSocket
 - **TypeScript 原生**：完整的 TypeScript 类型支持
 - **中间件系统**：集成 @dreamer/middleware，更灵活的中间件处理
 
-## 状态
-
-🚧 **开发中**
-
-## 备注
+## 📝 备注
 
 - 支持使用 @dreamer/middleware 中间件系统，可以灵活处理 WebSocket 连接
 - 服务端和客户端都支持（客户端通过 `jsr:@dreamer/websocket/client`），可以构建完整的实时通信应用
 - API 设计类似 socket.io，降低学习成本，提升开发体验
 - 支持房间管理、心跳检测、自动重连、消息确认等高级功能
 - 与 @dreamer/http 配合使用，可以在同一个应用中同时提供 HTTP 和 WebSocket 服务
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE.md](./LICENSE.md)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Dreamer Team**
+
+</div>

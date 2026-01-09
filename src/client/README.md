@@ -1,6 +1,11 @@
 # @dreamer/websocket/client
 
-一个用于浏览器的 WebSocket 客户端库，提供 WebSocket 客户端功能，支持实时双向通信。
+> 一个用于浏览器的 WebSocket 客户端库，提供 WebSocket 客户端功能，支持实时双向通信
+
+[![JSR](https://jsr.io/badges/@dreamer/websocket/client)](https://jsr.io/@dreamer/websocket/client)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
 
 ## 服务端支持
 
@@ -12,7 +17,9 @@ WebSocket 客户端库，用于浏览器环境中的实时通信应用。
 
 ## 特性
 
-- **基于浏览器 WebSocket API**：标准 WebSocket 客户端
+- **基于浏览器 WebSocket API**：
+  - 标准 WebSocket 客户端
+  - 使用浏览器原生 WebSocket API
 - **自动重连**：
   - 断线自动重连
   - 重连策略（指数退避、固定间隔等）
@@ -51,7 +58,7 @@ deno add jsr:@dreamer/websocket/client
 - **环境**：✅ 支持（浏览器环境）
 - **依赖**：无外部依赖
 
-## 使用示例
+## 🚀 快速开始
 
 ### 基础客户端
 
@@ -99,13 +106,31 @@ client.close();
 - **推送服务**：消息推送、状态更新、数据同步
 - **在线协作**：协同编辑、实时白板、多人游戏
 
-## 状态
+---
 
-🚧 **开发中**
-
-## 备注
+## 📝 备注
 
 - **基于浏览器 WebSocket API**：使用标准 WebSocket API
 - **统一接口**：与服务端使用相似的 API 接口，降低学习成本
 - **类型安全**：完整的 TypeScript 类型支持
 - **无外部依赖**：纯 TypeScript 实现
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+---
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE.md](../../../LICENSE.md)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Dreamer Team**
+
+</div>

@@ -1,6 +1,6 @@
 {
   "name": "@dreamer/websocket",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "license": "MIT",
   "exports": {
     ".": "./src/mod.ts",
@@ -34,6 +34,6 @@
     }
   },
   "imports": {
-    "@dreamer/test": "jsr:@dreamer/test@^1.0.0-beta.4"
+    "@dreamer/test": "jsr:@dreamer/test@^1.0.0-beta.6"
   }
 }
