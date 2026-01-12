@@ -501,7 +501,14 @@ export class Socket {
   async sendMessage(message: WebSocketMessage): Promise<void> {
     // 序列化消息（自动加密）
     const serialized = await serializeMessage(message, this.encryptionManager);
+    this.sendRaw(serialized);
+  }
 
+  /**
+   * 发送已序列化的消息（优化方法，用于批量发送）
+   * @param serialized 已序列化的消息字符串
+   */
+  sendRaw(serialized: string): void {
     // 检查是否是 WebSocketAdapter（通过检查是否有 pendingOperations 属性）
     const isAdapter = typeof (this.ws as any).pendingOperations !== "undefined";
 
@@ -742,10 +749,13 @@ export class Socket {
     emit: (event: string, data?: any) => void;
   } {
     return {
-      emit: (event: string, data?: any) => {
-        for (const room of rooms) {
-          this.server.emitToRoom(room, event, data, this.id);
-        }
+      emit: async (event: string, data?: any) => {
+        // 并行向多个房间发送消息
+        await Promise.all(
+          rooms.map((room) =>
+            this.server.emitToRoom(room, event, data, this.id)
+          ),
+        );
       },
     };
   }
@@ -756,8 +766,8 @@ export class Socket {
   broadcast: {
     emit: (event: string, data?: any) => void;
   } = {
-    emit: (event: string, data?: any) => {
-      this.server.broadcast(event, data, this.id);
+    emit: async (event: string, data?: any) => {
+      await this.server.broadcast(event, data, this.id);
     },
   };
 

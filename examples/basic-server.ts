@@ -59,3 +59,6 @@ globalThis.addEventListener("beforeunload", () => {
   console.log("正在关闭服务器...");
   io.close();
 });
+
+// 导出服务器实例以便测试脚本可以关闭它
+export default io;

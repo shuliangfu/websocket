@@ -13,6 +13,10 @@ export interface EncryptionConfig {
   algorithm?: "aes-256-gcm" | "aes-128-gcm" | "aes-256-cbc" | "aes-128-cbc";
   /** 是否启用加密（默认：true） */
   enabled?: boolean;
+  /** 加密缓存大小（默认：1000） */
+  cacheSize?: number;
+  /** 加密缓存过期时间（毫秒，默认：60000） */
+  cacheTTL?: number;
 }
 
 /**

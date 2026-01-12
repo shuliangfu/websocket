@@ -3,6 +3,8 @@
  * 处理 WebSocket 房间的创建、加入、离开和消息广播
  */
 
+import type { EncryptionManager } from "./encryption.ts";
+import type { MessageCache } from "./message-cache.ts";
 import type { Socket } from "./socket.ts";
 
 /**
@@ -61,20 +63,24 @@ export class RoomManager {
    * @param event 事件名称
    * @param data 事件数据
    * @param excludeSocketId 排除的 Socket ID
+   * @param messageCache 消息缓存（可选，用于优化）
+   * @param encryptionManager 加密管理器（可选）
    */
-  emitToRoom(
+  async emitToRoom(
     room: string,
     event: string,
     data?: any,
     excludeSocketId?: string,
-  ): void {
+    messageCache?: MessageCache,
+    encryptionManager?: EncryptionManager,
+  ): Promise<void> {
     const roomSockets = this.rooms.get(room);
     if (!roomSockets) {
       return;
     }
 
     // 收集需要发送的 Socket
-    const sockets: Array<{ emit: (event: string, data?: any) => void }> = [];
+    const sockets: Socket[] = [];
     for (const socketId of roomSockets) {
       if (socketId !== excludeSocketId) {
         const socket = this.sockets.get(socketId);
@@ -84,28 +90,71 @@ export class RoomManager {
       }
     }
 
+    if (sockets.length === 0) {
+      return;
+    }
+
+    // 构建消息对象
+    const message = {
+      type: "event" as const,
+      event,
+      data,
+    };
+
     // 如果 Socket 数较少，直接发送
     if (sockets.length <= 100) {
-      for (const socket of sockets) {
-        socket.emit(event, data);
+      // 对于少量连接，使用缓存优化：只序列化一次
+      if (messageCache && sockets.length > 1) {
+        const serialized = await messageCache.serialize(
+          message,
+          encryptionManager,
+        );
+        for (const socket of sockets) {
+          socket.sendRaw(serialized);
+        }
+      } else {
+        // 单个连接或未启用缓存，直接发送
+        for (const socket of sockets) {
+          socket.emit(event, data);
+        }
       }
       return;
     }
 
     // 大量 Socket 时，使用异步分批发送
-    const batchSize = 50;
+    // 动态计算批次大小：根据连接数调整，最小 50，最大 200
+    const batchSize = Math.min(
+      200,
+      Math.max(50, Math.floor(sockets.length / 20)),
+    );
+
+    // 先序列化消息（使用缓存）
+    const serialized = messageCache
+      ? await messageCache.serialize(message, encryptionManager)
+      : null;
+
     let index = 0;
 
     const sendBatch = () => {
       const end = Math.min(index + batchSize, sockets.length);
       for (let i = index; i < end; i++) {
-        sockets[i].emit(event, data);
+        if (serialized) {
+          // 使用已序列化的消息
+          sockets[i].sendRaw(serialized);
+        } else {
+          // 未启用缓存，单独序列化
+          sockets[i].emit(event, data);
+        }
       }
       index = end;
 
       if (index < sockets.length) {
-        // 使用 setTimeout 让出事件循环
-        setTimeout(sendBatch, 0);
+        // 使用 queueMicrotask 或 setTimeout 让出事件循环
+        if (typeof queueMicrotask === "function") {
+          queueMicrotask(sendBatch);
+        } else {
+          setTimeout(sendBatch, 0);
+        }
       }
     };
 

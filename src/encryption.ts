@@ -7,6 +7,18 @@ import { decrypt, encrypt } from "@dreamer/crypto";
 import type { EncryptionConfig } from "./types.ts";
 
 /**
+ * 加密缓存项
+ */
+interface EncryptionCacheItem {
+  /** 加密后的消息 */
+  encrypted: string;
+  /** 缓存时间戳 */
+  timestamp: number;
+  /** 使用次数 */
+  useCount: number;
+}
+
+/**
  * 加密管理器
  * 负责消息的加密和解密
  */
@@ -21,6 +33,12 @@ export class EncryptionManager {
     | "aes-128-cbc";
   /** 是否启用加密 */
   private enabled: boolean;
+  /** 加密缓存（明文哈希 -> 加密结果） */
+  private encryptionCache: Map<string, EncryptionCacheItem> = new Map();
+  /** 最大缓存大小 */
+  private maxCacheSize: number = 1000;
+  /** 缓存过期时间（毫秒） */
+  private cacheTTL: number = 60000;
 
   /**
    * 创建加密管理器
@@ -57,10 +75,28 @@ export class EncryptionManager {
         );
       }
     }
+
+    // 设置缓存配置（如果提供）
+    if (config.cacheSize !== undefined) {
+      this.maxCacheSize = config.cacheSize;
+    }
+    if (config.cacheTTL !== undefined) {
+      this.cacheTTL = config.cacheTTL;
+    }
   }
 
   /**
-   * 加密消息
+   * 计算明文哈希（用于缓存键）
+   * @param plaintext 明文消息
+   * @returns 哈希值
+   */
+  private hashPlaintext(plaintext: string): string {
+    // 使用简单的哈希（对于大量连接场景，可以使用更高效的哈希算法）
+    return `${this.algorithm}:${plaintext.length}:${plaintext.slice(0, 100)}`;
+  }
+
+  /**
+   * 加密消息（带缓存）
    * @param plaintext 明文消息（JSON 字符串）
    * @returns 加密后的消息（Base64 编码）
    */
@@ -69,13 +105,78 @@ export class EncryptionManager {
       return plaintext;
     }
 
+    // 检查缓存
+    const cacheKey = this.hashPlaintext(plaintext);
+    const cached = this.encryptionCache.get(cacheKey);
+    if (cached) {
+      // 检查是否过期
+      if (Date.now() - cached.timestamp < this.cacheTTL) {
+        cached.useCount++;
+        return cached.encrypted;
+      } else {
+        // 过期，删除
+        this.encryptionCache.delete(cacheKey);
+      }
+    }
+
+    // 缓存未命中，加密消息
     try {
-      return await encrypt(plaintext, this.key, this.algorithm);
+      const encrypted = await encrypt(plaintext, this.key, this.algorithm);
+
+      // 如果缓存已满，删除最少使用的项
+      if (this.encryptionCache.size >= this.maxCacheSize) {
+        this.evictLeastUsed();
+      }
+
+      // 添加到缓存
+      this.encryptionCache.set(cacheKey, {
+        encrypted,
+        timestamp: Date.now(),
+        useCount: 1,
+      });
+
+      return encrypted;
     } catch (error) {
       throw new Error(
         `加密失败: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  /**
+   * 删除最少使用的缓存项
+   */
+  private evictLeastUsed(): void {
+    let leastUsed: { key: string; useCount: number } | null = null;
+
+    for (const [key, cached] of this.encryptionCache.entries()) {
+      if (!leastUsed || cached.useCount < leastUsed.useCount) {
+        leastUsed = { key, useCount: cached.useCount };
+      }
+    }
+
+    if (leastUsed) {
+      this.encryptionCache.delete(leastUsed.key);
+    }
+  }
+
+  /**
+   * 清理过期缓存
+   */
+  cleanupCache(): void {
+    const now = Date.now();
+    for (const [key, cached] of this.encryptionCache.entries()) {
+      if (now - cached.timestamp >= this.cacheTTL) {
+        this.encryptionCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * 清空加密缓存
+   */
+  clearCache(): void {
+    this.encryptionCache.clear();
   }
 
   /**

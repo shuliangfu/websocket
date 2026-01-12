@@ -85,15 +85,15 @@ const batchSize = Math.min(50, Math.max(10, Math.floor(sockets.length / 100)));
 class BatchHeartbeatManager {
   private connections: Set<Socket> = new Set();
   private interval: number;
-  
+
   add(socket: Socket) {
     this.connections.add(socket);
   }
-  
+
   remove(socket: Socket) {
     this.connections.delete(socket);
   }
-  
+
   start() {
     setInterval(() => {
       // 批量发送心跳
@@ -122,11 +122,11 @@ class BatchHeartbeatManager {
 // 使用对象池
 class SocketPool {
   private pool: Socket[] = [];
-  
+
   acquire(): Socket {
     return this.pool.pop() || new Socket();
   }
-  
+
   release(socket: Socket) {
     socket.reset();
     this.pool.push(socket);
@@ -152,11 +152,11 @@ import { RedisAdapter } from "@dreamer/cache";
 
 class DistributedServer {
   private redis: RedisAdapter;
-  
+
   async broadcast(event: string, data: any) {
     // 获取所有服务器节点
     const nodes = await this.redis.keys("server:*");
-    
+
     // 向每个节点发送广播请求
     for (const node of nodes) {
       await this.redis.publish(node, { event, data });
@@ -179,7 +179,7 @@ class MessageQueue {
   private queue: Array<{ socket: Socket; message: any }> = [];
   private maxSize: number = 10000;
   private processing = false;
-  
+
   enqueue(socket: Socket, message: any) {
     if (this.queue.length >= this.maxSize) {
       // 丢弃最旧的消息
@@ -188,11 +188,11 @@ class MessageQueue {
     this.queue.push({ socket, message });
     this.process();
   }
-  
+
   async process() {
     if (this.processing) return;
     this.processing = true;
-    
+
     while (this.queue.length > 0) {
       const batch = this.queue.splice(0, 100);
       for (const { socket, message } of batch) {
@@ -200,7 +200,7 @@ class MessageQueue {
       }
       await new Promise(resolve => setTimeout(resolve, 0));
     }
-    
+
     this.processing = false;
   }
 }
@@ -220,13 +220,13 @@ class MessageQueue {
 // 缓存加密结果
 class EncryptionCache {
   private cache = new Map<string, string>();
-  
+
   async encrypt(data: string, manager: EncryptionManager): Promise<string> {
     const key = this.hash(data);
     if (this.cache.has(key)) {
       return this.cache.get(key)!;
     }
-    
+
     const encrypted = await manager.encryptMessage(data);
     this.cache.set(key, encrypted);
     return encrypted;
@@ -248,11 +248,11 @@ class EncryptionCache {
 class OptimizedRoomManager {
   private roomIndex: Map<string, Set<string>> = new Map();
   private socketIndex: Map<string, Set<string>> = new Map(); // socket -> rooms
-  
+
   getRoomsForSocket(socketId: string): Set<string> {
     return this.socketIndex.get(socketId) || new Set();
   }
-  
+
   getSocketsInRoom(room: string): Set<string> {
     return this.roomIndex.get(room) || new Set();
   }

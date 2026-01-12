@@ -57,7 +57,14 @@ export type ServerStats = {
 };
 
 // 导出功能模块
+export { BatchHeartbeatManager } from "./batch-heartbeat.ts";
 export { HeartbeatManager } from "./heartbeat.ts";
+export {
+  getGlobalMessageCache,
+  MessageCache,
+  setGlobalMessageCache,
+} from "./message-cache.ts";
+export { MessageQueue } from "./message-queue.ts";
 export { Namespace, NamespaceManager } from "./namespace.ts";
 export { RoomManager } from "./room.ts";
 

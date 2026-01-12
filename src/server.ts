@@ -9,6 +9,8 @@ import {
   upgradeWebSocket,
 } from "@dreamer/runtime-adapter";
 import { EncryptionManager } from "./encryption.ts";
+import { MessageCache } from "./message-cache.ts";
+import { MessageQueue } from "./message-queue.ts";
 import { Namespace, NamespaceManager } from "./namespace.ts";
 import { RoomManager } from "./room.ts";
 import { Socket } from "./socket.ts";
@@ -43,6 +45,10 @@ export class Server {
   private httpServer?: ServeHandle;
   /** 加密管理器（用于自动解密消息） */
   private encryptionManager?: EncryptionManager;
+  /** 消息缓存（用于优化大量连接场景） */
+  private messageCache?: MessageCache;
+  /** 消息队列（用于缓冲和批量处理消息） */
+  private messageQueue?: MessageQueue;
 
   /**
    * 创建 WebSocket 服务器实例
@@ -68,6 +74,14 @@ export class Server {
     if (this.options.encryption) {
       this.encryptionManager = new EncryptionManager(this.options.encryption);
     }
+
+    // 初始化消息缓存（用于优化大量连接场景）
+    // 默认缓存 1000 条消息，1 分钟过期
+    this.messageCache = new MessageCache(1000, 60000);
+
+    // 初始化消息队列（用于缓冲和批量处理消息）
+    // 默认最大队列 10000 条，批次大小 100，处理间隔 10ms
+    this.messageQueue = new MessageQueue(10000, 100, 10);
   }
 
   /**
@@ -313,13 +327,20 @@ export class Server {
    * @param data 事件数据
    * @param excludeSocketId 排除的 Socket ID
    */
-  emitToRoom(
+  async emitToRoom(
     room: string,
     event: string,
     data?: any,
     excludeSocketId?: string,
-  ): void {
-    this.roomManager.emitToRoom(room, event, data, excludeSocketId);
+  ): Promise<void> {
+    await this.roomManager.emitToRoom(
+      room,
+      event,
+      data,
+      excludeSocketId,
+      this.messageCache,
+      this.encryptionManager,
+    );
   }
 
   /**
@@ -328,40 +349,103 @@ export class Server {
    * @param data 事件数据
    * @param excludeSocketId 排除的 Socket ID
    */
-  broadcast(event: string, data?: any, excludeSocketId?: string): void {
+  async broadcast(
+    event: string,
+    data?: any,
+    excludeSocketId?: string,
+  ): Promise<void> {
     // 使用异步队列避免阻塞事件循环
     // 对于大量连接，分批发送消息
     const sockets = Array.from(this.sockets.entries()).filter(
       ([socketId, socket]) => socketId !== excludeSocketId && socket.connected,
     );
 
+    if (sockets.length === 0) {
+      return;
+    }
+
+    // 构建消息对象
+    const message = {
+      type: "event" as const,
+      event,
+      data,
+    };
+
     // 如果连接数较少，直接发送
     if (sockets.length <= 100) {
-      for (const [, socket] of sockets) {
-        socket.emit(event, data);
+      // 对于少量连接，使用缓存优化：只序列化一次
+      if (this.messageCache && sockets.length > 1) {
+        const serialized = await this.messageCache.serialize(
+          message,
+          this.encryptionManager,
+        );
+        for (const [, socket] of sockets) {
+          socket.sendRaw(serialized);
+        }
+      } else {
+        // 单个连接或未启用缓存，直接发送
+        for (const [, socket] of sockets) {
+          socket.emit(event, data);
+        }
       }
       return;
     }
 
     // 大量连接时，使用异步分批发送
-    const batchSize = 50;
+    // 动态计算批次大小：根据连接数调整，最小 50，最大 200
+    const batchSize = Math.min(
+      200,
+      Math.max(50, Math.floor(sockets.length / 20)),
+    );
+
+    // 先序列化消息（使用缓存）
+    const serialized = this.messageCache
+      ? await this.messageCache.serialize(message, this.encryptionManager)
+      : null;
+
     let index = 0;
 
     const sendBatch = () => {
       const end = Math.min(index + batchSize, sockets.length);
       for (let i = index; i < end; i++) {
         const [, socket] = sockets[i];
-        socket.emit(event, data);
+        if (serialized) {
+          // 使用已序列化的消息
+          socket.sendRaw(serialized);
+        } else {
+          // 未启用缓存，单独序列化
+          socket.emit(event, data);
+        }
       }
       index = end;
 
       if (index < sockets.length) {
-        // 使用 setTimeout 让出事件循环
-        setTimeout(sendBatch, 0);
+        // 使用 queueMicrotask 或 setTimeout 让出事件循环
+        if (typeof queueMicrotask === "function") {
+          queueMicrotask(sendBatch);
+        } else {
+          setTimeout(sendBatch, 0);
+        }
       }
     };
 
     sendBatch();
+  }
+
+  /**
+   * 获取消息队列实例（用于高级用法）
+   * @returns 消息队列实例
+   */
+  getMessageQueue(): MessageQueue | undefined {
+    return this.messageQueue;
+  }
+
+  /**
+   * 获取消息缓存实例（用于高级用法）
+   * @returns 消息缓存实例
+   */
+  getMessageCache(): MessageCache | undefined {
+    return this.messageCache;
   }
 
   /**
@@ -372,6 +456,17 @@ export class Server {
     totalConnections: number;
     totalRooms: number;
     connectionsByRoom: Map<string, number>;
+    messageQueue?: {
+      size: number;
+      maxSize: number;
+      batchSize: number;
+      processing: boolean;
+    };
+    messageCache?: {
+      size: number;
+      maxSize: number;
+      hitRate: number;
+    };
   } {
     const connectionsByRoom = new Map<string, number>();
     for (const room of this.roomManager.getRooms()) {
