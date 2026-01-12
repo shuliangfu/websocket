@@ -1455,12 +1455,10 @@ describe("WebSocket 加密 - 边界情况", () => {
       let receivedBinary: any = null;
 
       server.on("connection", (socket) => {
-        // 等待连接完全建立后再设置监听器
-        setTimeout(() => {
-          socket.on("binary", (data: any) => {
-            receivedBinary = data;
-          });
-        }, 100);
+        // 立即设置监听器，确保能接收到二进制消息
+        socket.on("binary", (data: any) => {
+          receivedBinary = data;
+        });
       });
 
       server.listen();
@@ -1477,13 +1475,13 @@ describe("WebSocket 加密 - 边界情况", () => {
             // 先发送一个简单的消息来触发适配器初始化
             setTimeout(() => {
               client.emit("ping-init", {});
-              // 等待适配器初始化后再发送实际消息
+              // 等待适配器初始化和服务端监听器设置完成后再发送实际消息
               setTimeout(() => {
                 // 发送二进制消息
                 const binaryData = new Uint8Array([1, 2, 3, 4, 5]);
                 client.sendBinary(binaryData);
-              }, 200);
-            }, 100);
+              }, 400);
+            }, 200);
             let checkInterval: number | undefined;
             const checkReceived = () => {
               if (receivedBinary) {
@@ -1503,7 +1501,7 @@ describe("WebSocket 加密 - 边界情况", () => {
         }),
       ]);
 
-      await delay(300);
+      await delay(500);
       // 二进制消息应该直接发送，不经过加密
       expect(receivedBinary).toBeTruthy();
       expect(
