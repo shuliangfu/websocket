@@ -41,7 +41,7 @@ export interface MongoDBAdapterOptions extends AdapterOptions {
 /**
  * MongoDB 分布式适配器
  * 使用 MongoDB 实现分布式 WebSocket 服务器
- * 
+ *
  * 注意：这是一个预留接口，具体实现需要根据实际需求完成
  */
 export class MongoDBAdapter implements WebSocketAdapter {
@@ -49,6 +49,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
   private sockets: Map<string, Socket> = new Map();
   private connectionConfig: MongoDBConnectionConfig;
   private heartbeatInterval: number;
+  private keyPrefix: string;
 
   constructor(options: MongoDBAdapterOptions) {
     this.connectionConfig = options.connection;
@@ -56,78 +57,74 @@ export class MongoDBAdapter implements WebSocketAdapter {
     this.keyPrefix = options.keyPrefix || "ws";
   }
 
-  private keyPrefix: string;
-
-  async init(serverId: string, sockets: Map<string, Socket>): Promise<void> {
-    this.serverId = serverId;
-    this.sockets = sockets;
+  init(_serverId: string, _sockets: Map<string, Socket>): void {
     // TODO: 实现 MongoDB 连接和初始化
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async close(): Promise<void> {
+  close(): void {
     // TODO: 实现关闭逻辑
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async addSocketToRoom(socketId: string, room: string): Promise<void> {
+  addSocketToRoom(_socketId: string, _room: string): void {
     // TODO: 实现添加 Socket 到房间
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async removeSocketFromRoom(socketId: string, room: string): Promise<void> {
+  removeSocketFromRoom(_socketId: string, _room: string): void {
     // TODO: 实现从房间移除 Socket
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async removeSocketFromAllRooms(socketId: string): Promise<void> {
+  removeSocketFromAllRooms(_socketId: string): void {
     // TODO: 实现从所有房间移除 Socket
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async getSocketsInRoom(room: string): Promise<string[]> {
+  getSocketsInRoom(_room: string): string[] {
     // TODO: 实现获取房间内的 Socket 列表
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async getRoomsForSocket(socketId: string): Promise<string[]> {
+  getRoomsForSocket(_socketId: string): string[] {
     // TODO: 实现获取 Socket 所在的房间列表
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async broadcast(message: MessageData): Promise<void> {
+  broadcast(_message: MessageData): void {
     // TODO: 实现广播消息
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async broadcastToRoom(room: string, message: MessageData): Promise<void> {
+  broadcastToRoom(_room: string, _message: MessageData): void {
     // TODO: 实现向房间广播消息
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async subscribe(
-    callback: (message: MessageData, serverId: string) => void,
-  ): Promise<void> {
+  subscribe(
+    _callback: (message: MessageData, serverId: string) => void,
+  ): void {
     // TODO: 实现订阅消息
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async unsubscribe(): Promise<void> {
+  unsubscribe(): void {
     // TODO: 实现取消订阅
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async getServerIds(): Promise<string[]> {
+  getServerIds(): string[] {
     // TODO: 实现获取所有服务器 ID
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async registerServer(): Promise<void> {
+  registerServer(): void {
     // TODO: 实现注册服务器
     throw new Error("MongoDB 适配器尚未实现");
   }
 
-  async unregisterServer(): Promise<void> {
+  unregisterServer(): void {
     // TODO: 实现注销服务器
     throw new Error("MongoDB 适配器尚未实现");
   }

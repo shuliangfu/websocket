@@ -27,8 +27,11 @@ import type {
 export class Server {
   /** 服务器配置 */
   public readonly options:
+    & ServerOptions
     & Required<Pick<ServerOptions, "path" | "pingTimeout" | "pingInterval">>
-    & ServerOptions;
+    & {
+      adapter?: import("./adapters/types.ts").WebSocketAdapter;
+    };
   /** Socket 连接池 */
   private sockets: Map<string, Socket> = new Map();
   /** 适配器到 Socket 实例的映射（用于 Bun 环境） */
@@ -64,7 +67,9 @@ export class Server {
       pingTimeout: options.pingTimeout || 60000,
       pingInterval: options.pingInterval || 30000,
       ...options,
-    };
+    } as
+      & ServerOptions
+      & Required<Pick<ServerOptions, "path" | "pingTimeout" | "pingInterval">>;
 
     // 初始化房间管理器
     this.roomManager = new RoomManager();
@@ -153,7 +158,7 @@ export class Server {
       const { MemoryAdapter } = await import("./adapters/memory.ts");
       this.adapter = new MemoryAdapter();
     }
-    
+
     // 确保适配器已初始化
     if (this.adapter?.init) {
       const result = this.adapter.init(this.serverId, this.sockets);
