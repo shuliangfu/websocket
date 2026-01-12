@@ -16,7 +16,7 @@ io.on("connection", (socket) => {
   console.log(`[服务器] 新连接建立: ${socket.id}`);
 
   // 监听自定义事件
-  socket.on("chat-message", (data) => {
+  socket.on("chat-message", (data: any) => {
     console.log(`[服务器] 收到来自 ${socket.id} 的消息:`, data);
 
     // 发送响应消息
@@ -28,18 +28,18 @@ io.on("connection", (socket) => {
   });
 
   // 监听 ping 事件
-  socket.on("ping", (data) => {
+  socket.on("ping", (data: any) => {
     console.log(`[服务器] 收到 ping:`, data);
     socket.emit("pong", { timestamp: Date.now() });
   });
 
   // 监听断开连接事件
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     console.log(`[服务器] 连接断开: ${socket.id}, 原因: ${reason}`);
   });
 
   // 监听错误事件
-  socket.on("error", (error) => {
+  socket.on("error", (error: any) => {
     console.error(`[服务器] 连接错误: ${socket.id}`, error);
   });
 
@@ -51,7 +51,7 @@ io.on("connection", (socket) => {
 });
 
 // 启动服务器
-await io.listen();
+io.listen();
 console.log("✅ WebSocket 服务器运行在 ws://localhost:8080/ws");
 
 // 优雅关闭

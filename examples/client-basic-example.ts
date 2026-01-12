@@ -6,7 +6,9 @@
 import { Client } from "../src/client/mod.ts";
 
 // 创建客户端实例
-const client = new Client("ws://localhost:8080/ws");
+const client = new Client({
+  url: "ws://localhost:8080/ws",
+});
 
 // 监听连接事件
 client.on("connect", () => {
@@ -57,7 +59,18 @@ client.on("binary", (data: ArrayBuffer | Blob | Uint8Array) => {
     });
     return;
   } else if (data instanceof Uint8Array) {
-    buffer = data.buffer;
+    const buf = data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength,
+    );
+    // 处理 SharedArrayBuffer 的情况
+    if (buf instanceof SharedArrayBuffer) {
+      const newBuffer = new ArrayBuffer(buf.byteLength);
+      new Uint8Array(newBuffer).set(new Uint8Array(buf));
+      buffer = newBuffer;
+    } else {
+      buffer = buf;
+    }
   } else {
     return;
   }
@@ -79,7 +92,7 @@ client.on("error", (error) => {
 
 // 连接到服务器
 console.log("[客户端] 正在连接到 ws://localhost:8080/ws...");
-await client.connect();
+client.connect();
 
 // 5 秒后发送二进制消息
 setTimeout(() => {

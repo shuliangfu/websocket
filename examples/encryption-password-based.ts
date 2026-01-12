@@ -84,7 +84,7 @@ async function passwordBasedKeyExample() {
     });
   });
 
-  client.on("login-success", (data: any) => {
+  client.on("login-success", async (data: any) => {
     console.log("[客户端] 登录成功:", data);
     client.disconnect();
     await server.close();
@@ -165,7 +165,7 @@ async function passwordConsistencyExample() {
     client.emit("message", { text: "使用相同密码派生的密钥" });
   });
 
-  client.on("reply", (data: any) => {
+  client.on("reply", async (data: any) => {
     console.log("[客户端] 收到回复:", data);
     client.disconnect();
     await server.close();
@@ -243,7 +243,7 @@ async function multiUserExample() {
     client1.emit("identify", { userId: "user1" });
   });
 
-  client1.on("identified", (data: any) => {
+  client1.on("identified", async (data: any) => {
     console.log("[客户端 user1] 已识别:", data);
     client1.disconnect();
     await server.close();

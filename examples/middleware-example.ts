@@ -22,7 +22,7 @@ const io = new Server({
  */
 io.use(
   authMiddleware(async (socket) => {
-    const token = socket.handshake.query.get("token");
+    const token = socket.handshake.query["token"];
     console.log(`[认证中间件] 验证 token: ${token}`);
 
     // 模拟 token 验证
@@ -111,7 +111,7 @@ io.on("connection", (socket) => {
   });
 
   // 监听消息
-  socket.on("message", (data) => {
+  socket.on("message", (data: any) => {
     console.log(`[服务器] 收到来自 ${user?.name} 的消息:`, data);
 
     // 检查消息频率（这里可以添加更复杂的限流逻辑）
@@ -138,7 +138,7 @@ io.on("connection", (socket) => {
   });
 
   // 监听断开连接
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     const duration = Date.now() - connectTime;
     console.log(
       `[服务器] 用户断开连接: ${user?.name} (${socket.id}), 原因: ${reason}, 连接时长: ${duration}ms`,
@@ -146,11 +146,11 @@ io.on("connection", (socket) => {
   });
 
   // 监听错误
-  socket.on("error", (error) => {
+  socket.on("error", (error: any) => {
     console.error(`[服务器] 连接错误: ${socket.id}`, error);
   });
 });
 
-await io.listen();
+io.listen();
 console.log("✅ 中间件示例服务器运行在 ws://localhost:8080/ws");
 console.log("   测试连接: ws://localhost:8080/ws?token=valid-token-123");

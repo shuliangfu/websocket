@@ -88,7 +88,7 @@ async function binaryMessageExample() {
     }, 200);
   });
 
-  client.on("binary", (data: any) => {
+  client.on("binary", async (data: any) => {
     console.log(`[客户端] 收到二进制消息`);
     console.log(`[客户端] 数据类型: ${data.constructor.name}`);
     receivedResponse = data instanceof Uint8Array
@@ -187,7 +187,7 @@ async function mixedMessageExample() {
     clientReceived.push({ type: "text", data });
   });
 
-  client.on("binary", (data: any) => {
+  client.on("binary", async (data: any) => {
     console.log("[客户端] 收到二进制响应");
     clientReceived.push({ type: "binary", data });
 
@@ -289,7 +289,7 @@ async function fileTransferExample() {
     }, 200);
   });
 
-  client.on("file-uploaded", (data: any) => {
+  client.on("file-uploaded", async (data: any) => {
     console.log("[客户端] 文件上传成功:", data);
     client.disconnect();
     await server.close();

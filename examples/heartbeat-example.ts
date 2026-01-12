@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
   });
 
   // 监听客户端发送的 ping
-  socket.on("ping", (data) => {
+  socket.on("ping", (data: any) => {
     const stats = connectionStats.get(socket.id);
     if (stats) {
       stats.lastPingTime = Date.now();
@@ -52,7 +52,7 @@ io.on("connection", (socket) => {
   });
 
   // 监听客户端发送的 pong（响应服务器的 ping）
-  socket.on("pong", (data) => {
+  socket.on("pong", (data: any) => {
     const stats = connectionStats.get(socket.id);
     if (stats) {
       stats.lastPingTime = Date.now();
@@ -87,7 +87,7 @@ io.on("connection", (socket) => {
   }, 10000); // 每 10 秒检查一次
 
   // 监听断开连接
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     const stats = connectionStats.get(socket.id);
     const duration = stats
       ? Math.floor((Date.now() - stats.connectTime) / 1000)
@@ -106,7 +106,7 @@ io.on("connection", (socket) => {
   });
 
   // 监听错误
-  socket.on("error", (error) => {
+  socket.on("error", (error: any) => {
     console.error(`[心跳检测] 连接错误: ${socket.id}`, error);
     connectionStats.delete(socket.id);
     clearInterval(healthCheckInterval);
@@ -135,6 +135,6 @@ setInterval(() => {
   console.log("=============================\n");
 }, 30000); // 每 30 秒输出一次
 
-await io.listen();
+io.listen();
 console.log("✅ 心跳检测示例服务器运行在 ws://localhost:8080/ws");
 console.log("   心跳配置: pingInterval=30s, pingTimeout=60s");

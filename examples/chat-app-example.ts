@@ -32,8 +32,8 @@ const rooms = new Map<string, {
 // 认证中间件（简化版）
 io.use(
   authMiddleware(async (socket) => {
-    const userId = socket.handshake.query.get("userId");
-    const userName = socket.handshake.query.get("userName");
+    const userId = socket.handshake.query["userId"];
+    const userName = socket.handshake.query["userName"];
 
     if (!userId || !userName) {
       console.log(`[聊天应用] 认证失败: 缺少用户信息`);
@@ -237,7 +237,7 @@ io.on("connection", (socket) => {
     );
 
     // 向房间内所有成员（包括发送者）广播消息
-    io.to(data.roomId).emit("room-message", messageData);
+    socket.to(data.roomId).emit("room-message", messageData);
 
     if (callback) {
       callback({ success: true, messageId: `msg-${Date.now()}` });
@@ -292,7 +292,7 @@ io.on("connection", (socket) => {
   /**
    * 断开连接处理
    */
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     console.log(`[聊天应用] 用户 ${user.name} 断开连接: ${reason}`);
 
     // 从所有房间中移除用户
@@ -323,6 +323,6 @@ io.on("connection", (socket) => {
   });
 });
 
-await io.listen();
+io.listen();
 console.log("✅ 聊天应用示例服务器运行在 ws://localhost:8080/ws");
 console.log("   测试连接: ws://localhost:8080/ws?userId=user-123&userName=测试用户");

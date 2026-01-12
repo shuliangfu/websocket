@@ -81,7 +81,7 @@ async function keyRotationExample() {
     }, 500);
   });
 
-  client.on("new-key", (data: any) => {
+  client.on("new-key", async (data: any) => {
     console.log("[客户端] 收到密钥轮换通知:", data);
     console.log("[客户端] 注意：实际应用中需要重新连接并使用新密钥");
     client.disconnect();
@@ -174,7 +174,7 @@ async function multiKeyExample() {
     });
   });
 
-  client1.on("room-response", (data: any) => {
+  client1.on("room-response", async (data: any) => {
     console.log(`[客户端 room1] 收到响应:`, data);
     client1.disconnect();
     await server.close();
@@ -244,7 +244,7 @@ async function keyStorageExample() {
     client.emit("test", { message: "测试密钥存储和恢复" });
   });
 
-  client.on("test-response", (data: any) => {
+  client.on("test-response", async (data: any) => {
     console.log("[客户端] 收到响应:", data);
     console.log("[客户端] 密钥存储和恢复测试成功");
     client.disconnect();
@@ -355,13 +355,13 @@ async function keyDerivationExample() {
     });
   });
 
-  client.on("auth-success", (data: any) => {
+  client.on("auth-success", async (data: any) => {
     console.log("[客户端] 认证成功:", data);
     client.disconnect();
     await server.close();
   });
 
-  client.on("auth-failed", (data: any) => {
+  client.on("auth-failed", async (data: any) => {
     console.log("[客户端] 认证失败:", data);
     client.disconnect();
     await server.close();

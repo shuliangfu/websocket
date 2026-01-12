@@ -311,7 +311,7 @@ async function callbackExample() {
     console.log("[客户端] 已连接");
 
     // 发送带回调的请求
-    client.emit("request", { query: "test query" }, (response: any) => {
+    client.emit("request", { query: "test query" }, async (response: any) => {
       console.log("[客户端] 收到回调响应（已解密）:", response);
       client.disconnect();
       await server.close();

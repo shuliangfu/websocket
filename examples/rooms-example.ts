@@ -110,11 +110,11 @@ io.on("connection", (socket) => {
   /**
    * 断开连接时自动离开所有房间
    */
-  socket.on("disconnect", (reason) => {
+  socket.on("disconnect", (reason: string) => {
     console.log(`[房间管理] 用户 ${socket.id} 断开连接: ${reason}`);
     // Socket 断开时会自动清理房间关系
   });
 });
 
-await io.listen();
+io.listen();
 console.log("✅ 房间管理示例服务器运行在 ws://localhost:8080/ws");

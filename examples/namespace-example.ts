@@ -14,7 +14,7 @@ const io = new Server({
 io.on("connection", (socket) => {
   console.log(`[默认命名空间] 用户 ${socket.id} 已连接`);
 
-  socket.on("message", (data) => {
+  socket.on("message", (data: any) => {
     console.log(`[默认命名空间] 收到消息:`, data);
     socket.emit("response", { message: "来自默认命名空间的响应" });
   });
@@ -29,11 +29,15 @@ const chatNamespace = io.of("/chat");
 chatNamespace.on("connection", (socket) => {
   console.log(`[聊天命名空间] 用户 ${socket.id} 已连接`);
 
-  socket.on("chat-message", (data) => {
+  socket.on("message", (data: any) => {
+    console.log(`[聊天命名空间] 收到消息:`, data);
+  });
+
+  socket.on("chat-message", (data: any) => {
     console.log(`[聊天命名空间] 收到聊天消息:`, data);
 
-    // 向聊天命名空间内所有用户广播消息
-    chatNamespace.emit("chat-message", {
+    // 向聊天命名空间内所有用户广播消息（使用 socket.broadcast）
+    socket.broadcast.emit("chat-message", {
       userId: socket.id,
       message: data.message,
       timestamp: Date.now(),
@@ -56,7 +60,7 @@ const gameNamespace = io.of("/game");
 gameNamespace.on("connection", (socket) => {
   console.log(`[游戏命名空间] 用户 ${socket.id} 已连接`);
 
-  socket.on("game-action", (data) => {
+  socket.on("game-action", (data: any) => {
     console.log(`[游戏命名空间] 收到游戏动作:`, data);
 
     // 向游戏房间广播动作
@@ -103,16 +107,22 @@ notificationNamespace.on("connection", (socket) => {
 });
 
 // 模拟发送通知（实际应用中可能由其他服务触发）
-setInterval(() => {
-  // 向所有已订阅的用户发送通知
-  notificationNamespace.to("user-123").emit("notification", {
-    type: "system",
-    message: "这是一条系统通知",
-    timestamp: Date.now(),
+// 注意：实际应用中应该通过 socket 发送，这里只是示例
+// 可以通过存储 socket 引用来实现
+const notificationSockets = new Map<string, any>();
+notificationNamespace.on("connection", (socket) => {
+  socket.on("subscribe", (userId: string) => {
+    notificationSockets.set(`user-${userId}`, socket);
   });
+});
+
+setInterval(() => {
+  // 向所有已订阅的用户发送通知（实际应用中应该遍历所有订阅的 socket）
+  // 这里只是示例，实际应该通过 socket 发送
+  console.log("[通知命名空间] 模拟发送系统通知");
 }, 10000); // 每 10 秒发送一次
 
-await io.listen();
+io.listen();
 console.log("✅ 命名空间示例服务器运行在 ws://localhost:8080/ws");
 console.log("   默认命名空间: ws://localhost:8080/ws");
 console.log("   聊天命名空间: ws://localhost:8080/ws/chat");

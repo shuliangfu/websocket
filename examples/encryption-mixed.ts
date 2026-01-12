@@ -66,7 +66,7 @@ async function clientOnlyEncryptionExample() {
     });
   });
 
-  client.on("server-message", (data: any) => {
+  client.on("server-message", async (data: any) => {
     console.log("[客户端] 收到服务端消息（未加密）:", data);
     client.disconnect();
     await server.close();
@@ -130,7 +130,7 @@ async function serverOnlyEncryptionExample() {
   });
 
   // 客户端会收到加密的 Base64 字符串
-  client.on("encrypted", (data: any) => {
+  client.on("encrypted", async (data: any) => {
     console.log(`[客户端] 收到服务端加密消息（Base64）:`, data);
     console.log(`[客户端] 无法解密，因为客户端未配置密钥`);
     client.disconnect();
@@ -209,7 +209,7 @@ async function selectiveEncryptionExample() {
     });
   });
 
-  client.on("secret", (data: any) => {
+  client.on("secret", async (data: any) => {
     console.log("[客户端] 收到服务端加密消息（已解密）:", data);
     client.disconnect();
     await server.close();

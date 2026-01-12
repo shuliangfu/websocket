@@ -31,7 +31,18 @@ io.on("connection", (socket) => {
       });
       return;
     } else if (data instanceof Uint8Array) {
-      buffer = data.buffer;
+      const buf = data.buffer.slice(
+        data.byteOffset,
+        data.byteOffset + data.byteLength,
+      );
+      // 处理 SharedArrayBuffer 的情况
+      if (buf instanceof SharedArrayBuffer) {
+        const newBuffer = new ArrayBuffer(buf.byteLength);
+        new Uint8Array(newBuffer).set(new Uint8Array(buf));
+        buffer = newBuffer;
+      } else {
+        buffer = buf;
+      }
     } else {
       console.error(`[二进制消息] 未知的二进制数据类型`);
       return;
@@ -103,7 +114,18 @@ io.on("connection", (socket) => {
         });
         return;
       } else if (data instanceof Uint8Array) {
-        buffer = data.buffer;
+        const buf = data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        );
+        // 处理 SharedArrayBuffer 的情况
+        if (buf instanceof SharedArrayBuffer) {
+          const newBuffer = new ArrayBuffer(buf.byteLength);
+          new Uint8Array(newBuffer).set(new Uint8Array(buf));
+          buffer = newBuffer;
+        } else {
+          buffer = buf;
+        }
       } else {
         return;
       }
@@ -184,5 +206,5 @@ io.on("connection", (socket) => {
   });
 });
 
-await io.listen();
+io.listen();
 console.log("✅ 二进制消息示例服务器运行在 ws://localhost:8080/ws");
