@@ -37,6 +37,8 @@ export interface ServerOptions {
   maxConnections?: number;
   /** 加密配置（可选，启用后服务端会自动解密消息） */
   encryption?: EncryptionConfig;
+  /** 分布式适配器（可选，用于多服务器实例） */
+  adapter?: import("./adapters/types.ts").WebSocketAdapter;
 }
 
 /**

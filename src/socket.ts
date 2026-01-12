@@ -813,7 +813,9 @@ export class Socket {
     // 触发断开事件
     this.emit("disconnect", reason);
 
-    // 从服务器移除
-    this.server.removeSocket(this.id);
+    // 从服务器移除（异步，但不等待）
+    this.server.removeSocket(this.id).catch(() => {
+      // 忽略错误
+    });
   }
 }

@@ -49,6 +49,10 @@ export class Server {
   private messageCache?: MessageCache;
   /** 消息队列（用于缓冲和批量处理消息） */
   private messageQueue?: MessageQueue;
+  /** 分布式适配器（用于多服务器实例） */
+  private adapter?: import("./adapters/types.ts").WebSocketAdapter;
+  /** 服务器 ID（用于分布式场景） */
+  private serverId: string;
 
   /**
    * 创建 WebSocket 服务器实例
@@ -82,6 +86,31 @@ export class Server {
     // 初始化消息队列（用于缓冲和批量处理消息）
     // 默认最大队列 10000 条，批次大小 100，处理间隔 10ms
     this.messageQueue = new MessageQueue(10000, 100, 10);
+
+    // 初始化分布式适配器（默认使用内存适配器）
+    // 注意：构造函数不能是 async，所以使用同步导入
+    if (this.options.adapter) {
+      this.adapter = this.options.adapter;
+    } else {
+      // 延迟初始化，在 listen 时完成
+      this.adapter = undefined as any; // 临时赋值，稍后在 listen 中初始化
+    }
+
+    // 生成服务器 ID
+    this.serverId = `server-${Date.now()}-${
+      Math.random().toString(36).substring(2, 9)
+    }`;
+
+    // 初始化适配器（异步初始化在 listen 时完成）
+    if (this.adapter?.init) {
+      // 注意：init 可能是异步的，但构造函数不能是异步的
+      // 实际的初始化会在 listen 时完成
+      Promise.resolve(this.adapter.init(this.serverId, this.sockets)).catch(
+        () => {
+          // 忽略初始化错误
+        },
+      );
+    }
   }
 
   /**
@@ -247,6 +276,16 @@ export class Server {
           // 添加到连接池
           this.sockets.set(socketInstance.id, socketInstance);
 
+          // 更新适配器的 Socket 映射
+          if (this.adapter?.init) {
+            const result = this.adapter.init(this.serverId, this.sockets);
+            if (result instanceof Promise) {
+              result.catch(() => {
+                // 忽略错误
+              });
+            }
+          }
+
           // 添加到命名空间的连接池
           matchedNamespace.addSocket(socketInstance);
 
@@ -307,8 +346,12 @@ export class Server {
    * @param socketId Socket ID
    * @param room 房间名称
    */
-  addSocketToRoom(socketId: string, room: string): void {
+  async addSocketToRoom(socketId: string, room: string): Promise<void> {
     this.roomManager.addSocketToRoom(socketId, room);
+    // 同步到适配器
+    if (this.adapter?.addSocketToRoom) {
+      await this.adapter.addSocketToRoom(socketId, room);
+    }
   }
 
   /**
@@ -316,8 +359,12 @@ export class Server {
    * @param socketId Socket ID
    * @param room 房间名称
    */
-  removeSocketFromRoom(socketId: string, room: string): void {
+  async removeSocketFromRoom(socketId: string, room: string): Promise<void> {
     this.roomManager.removeSocketFromRoom(socketId, room);
+    // 同步到适配器
+    if (this.adapter?.removeSocketFromRoom) {
+      await this.adapter.removeSocketFromRoom(socketId, room);
+    }
   }
 
   /**
@@ -333,6 +380,16 @@ export class Server {
     data?: any,
     excludeSocketId?: string,
   ): Promise<void> {
+    // 先通过适配器广播到其他服务器的相同房间
+    if (this.adapter?.broadcastToRoom) {
+      await this.adapter.broadcastToRoom(room, {
+        event,
+        data,
+        excludeSocketId,
+      });
+    }
+
+    // 本地发送
     await this.roomManager.emitToRoom(
       room,
       event,
@@ -389,6 +446,15 @@ export class Server {
         }
       }
       return;
+    }
+
+    // 先通过适配器广播到其他服务器
+    if (this.adapter?.broadcast) {
+      await this.adapter.broadcast({
+        event,
+        data,
+        excludeSocketId,
+      });
     }
 
     // 大量连接时，使用异步分批发送
@@ -511,9 +577,19 @@ export class Server {
    * 移除 Socket
    * @param socketId Socket ID
    */
-  removeSocket(socketId: string): void {
+  async removeSocket(socketId: string): Promise<void> {
+    // 从适配器中移除
+    if (this.adapter?.removeSocketFromAllRooms) {
+      await this.adapter.removeSocketFromAllRooms(socketId);
+    }
+
     this.sockets.delete(socketId);
     this.roomManager.unregisterSocket(socketId);
+
+    // 更新适配器的 Socket 映射
+    if (this.adapter?.init) {
+      this.adapter.init(this.serverId, this.sockets);
+    }
   }
 
   /**

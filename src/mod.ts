@@ -89,3 +89,6 @@ export {
 
 // 导出加密模块
 export { EncryptionManager } from "./encryption.ts";
+
+// 导出适配器模块
+export * from "./adapters/mod.ts";
