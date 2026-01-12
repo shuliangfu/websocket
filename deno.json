@@ -8,8 +8,7 @@
   },
   "publish": {
     "include": [
-      "src/mod.ts",
-      "src/client/mod.ts",
+      "src/**/*.ts",
       "LICENSE.md",
       "README.md",
       "TEST_REPORT.md"
@@ -18,7 +17,8 @@
       "**/*.test.ts",
       "**/*.spec.ts",
       "**/test/**",
-      "**/tests/**"
+      "**/tests/**",
+      "**/examples/**"
     ]
   },
   "lint": {
