@@ -25,6 +25,10 @@
  * ```
  */
 
+import { EncryptionManager } from "../encryption.ts";
+import { parseMessage, serializeMessage } from "../message.ts";
+import type { EncryptionConfig, WebSocketMessage } from "../types.ts";
+
 /**
  * WebSocket 客户端配置选项
  */
@@ -47,6 +51,8 @@ export interface ClientOptions {
   query?: Record<string, string>;
   /** 协议列表 */
   protocols?: string[];
+  /** 加密配置（可选，启用后客户端会自动加密消息） */
+  encryption?: EncryptionConfig;
 }
 
 /**
@@ -91,6 +97,8 @@ export class Client {
   /** 连接状态 */
   private state: "connecting" | "connected" | "disconnected" | "reconnecting" =
     "disconnected";
+  /** 加密管理器（用于自动加密消息） */
+  private encryptionManager?: EncryptionManager;
 
   /**
    * 创建 WebSocket 客户端实例
@@ -106,6 +114,11 @@ export class Client {
       pingTimeout: options.pingTimeout || 60000,
       ...options,
     };
+
+    // 初始化加密管理器（如果配置了加密）
+    if (this.options.encryption) {
+      this.encryptionManager = new EncryptionManager(this.options.encryption);
+    }
 
     // 自动连接
     this.connect();
@@ -202,9 +215,14 @@ export class Client {
    * @param data 消息数据
    */
   private handleMessage(data: string | ArrayBuffer | Blob): void {
-    try {
-      const message = this.parseMessage(data);
+    // 如果是二进制消息，直接触发 binary 事件
+    if (data instanceof ArrayBuffer || data instanceof Blob) {
+      this.emit("binary", data);
+      return;
+    }
 
+    // 异步处理消息（支持解密）
+    this.parseMessage(data).then((message: WebSocketMessage) => {
       // 处理心跳响应
       if (message.type === "pong") {
         this.handlePong();
@@ -213,7 +231,15 @@ export class Client {
 
       // 处理心跳请求
       if (message.type === "ping") {
-        this.send({ type: "pong" });
+        this.send({ type: "pong" }).catch(() => {
+          // 忽略发送失败的错误
+        });
+        return;
+      }
+
+      // 处理二进制消息
+      if (message.type === "binary") {
+        this.emit("binary", message.data);
         return;
       }
 
@@ -221,22 +247,25 @@ export class Client {
       if (message.type === "event" && message.event) {
         this.emit(message.event, message.data);
       }
-    } catch (error) {
+
+      // 处理回调消息
+      if (message.type === "callback" && message.callbackId) {
+        this.emit("callback", message.data);
+      }
+    }).catch((error: unknown) => {
       this.emit("error", error);
-    }
+    });
   }
 
   /**
-   * 解析消息
+   * 解析消息（支持自动解密）
    * @param data 消息数据
    * @returns 解析后的消息
    */
-  private parseMessage(data: string | ArrayBuffer | Blob): any {
-    if (typeof data === "string") {
-      return JSON.parse(data);
-    }
-    // 二进制消息暂不支持复杂解析
-    return { type: "binary", data };
+  private async parseMessage(
+    data: string | ArrayBuffer | Blob,
+  ): Promise<WebSocketMessage> {
+    return await parseMessage(data, this.encryptionManager);
   }
 
   /**
@@ -357,17 +386,20 @@ export class Client {
   }
 
   /**
-   * 发送消息
+   * 发送消息（支持自动加密）
    * @param message 消息对象
    */
-  private send(message: any): void {
+  private async send(message: WebSocketMessage): Promise<void> {
+    // 序列化消息（自动加密）
+    const serialized = await serializeMessage(message, this.encryptionManager);
+
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+      this.ws.send(serialized);
     } else {
       // 如果未连接，将消息加入队列
       if (message.type === "event") {
         this.messageQueue.push({
-          event: message.event,
+          event: message.event!,
           data: message.data,
         });
       }
@@ -421,9 +453,14 @@ export class Client {
   /**
    * 发送事件
    * @param event 事件名称
-   * @param data 事件数据
+   * @param data 事件数据（支持任意类型，包括二进制数据）
+   * @param callback 确认回调函数（可选，用于消息确认机制）
    */
-  emit(event: string, data?: any): void {
+  emit(
+    event: string,
+    data?: any,
+    callback?: (response: any) => void,
+  ): void {
     // 触发本地事件监听器
     const listeners = this.listeners.get(event);
     if (listeners) {
@@ -432,12 +469,177 @@ export class Client {
       }
     }
 
-    // 发送到服务器
+    // 如果数据是二进制类型，直接发送二进制（不支持回调）
+    if (
+      data instanceof ArrayBuffer ||
+      data instanceof Blob ||
+      data instanceof Uint8Array
+    ) {
+      this.sendBinary(data);
+      return;
+    }
+
+    // 如果有回调函数，生成回调ID并注册回调
+    let callbackId: string | undefined;
+    if (callback) {
+      callbackId = `${Date.now()}-${
+        Math.random().toString(36).substring(2, 9)
+      }`;
+      // 注册一次性回调监听器
+      const callbackListener = (responseData: any) => {
+        callback(responseData);
+        // 移除监听器
+        this.off("callback", callbackListener);
+      };
+      this.on("callback", callbackListener);
+    }
+
+    // 发送到服务器（JSON 格式）
     this.send({
       type: "event",
       event,
       data,
+      callbackId,
     });
+  }
+
+  /**
+   * 发送二进制消息
+   * @param data 二进制数据（ArrayBuffer、Blob 或 Uint8Array）
+   */
+  sendBinary(data: ArrayBuffer | Blob | Uint8Array): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error("WebSocket 未连接，无法发送二进制消息");
+    }
+
+    // 将 Uint8Array 转换为 ArrayBuffer
+    let binaryData: ArrayBuffer | Blob;
+    if (data instanceof Uint8Array) {
+      // 创建一个新的 ArrayBuffer 并复制数据，避免 SharedArrayBuffer 类型问题
+      const buffer = data.buffer.slice(
+        data.byteOffset,
+        data.byteOffset + data.byteLength,
+      );
+      if (buffer instanceof SharedArrayBuffer) {
+        // 如果是 SharedArrayBuffer，创建新的 ArrayBuffer 并复制数据
+        const newBuffer = new ArrayBuffer(buffer.byteLength);
+        new Uint8Array(newBuffer).set(new Uint8Array(buffer));
+        binaryData = newBuffer;
+      } else {
+        binaryData = buffer;
+      }
+    } else {
+      binaryData = data;
+    }
+
+    this.ws.send(binaryData);
+  }
+
+  /**
+   * 上传文件（分片上传）
+   * @param file 文件对象（File 或 Blob）
+   * @param options 上传选项
+   * @returns 上传进度回调函数
+   */
+  uploadFile(
+    file: File | Blob,
+    options?: {
+      chunkSize?: number; // 分片大小（字节，默认：64KB）
+      onProgress?: (progress: number) => void; // 进度回调（0-100）
+      onComplete?: () => void; // 完成回调
+      onError?: (error: Error) => void; // 错误回调
+    },
+  ): { cancel: () => void } {
+    const chunkSize = options?.chunkSize || 64 * 1024; // 默认 64KB
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    let currentChunk = 0;
+    let cancelled = false;
+
+    // 生成唯一的上传ID（客户端生成，确保唯一性）
+    const uploadId = `${Date.now()}-${
+      Math.random().toString(36).substring(2, 9)
+    }-${file instanceof File ? file.name : "blob"}`;
+
+    const uploadChunk = async (chunkIndex: number) => {
+      if (cancelled || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        if (options?.onError) {
+          options.onError(new Error("上传已取消或连接已断开"));
+        }
+        return;
+      }
+
+      const start = chunkIndex * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+
+      try {
+        // 发送分片元数据（JSON），包含uploadId
+        this.send({
+          type: "event",
+          event: "file-chunk",
+          data: {
+            uploadId, // 传递唯一的上传ID
+            fileName: file instanceof File ? file.name : "blob",
+            fileSize: file.size,
+            chunkIndex,
+            totalChunks,
+            chunkSize: chunk.size,
+          },
+        });
+
+        // 发送分片数据（二进制）
+        await new Promise<void>((resolve, reject) => {
+          if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            reject(new Error("连接已断开"));
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result instanceof ArrayBuffer) {
+              this.ws!.send(reader.result);
+              resolve();
+            } else {
+              reject(new Error("读取文件分片失败"));
+            }
+          };
+          reader.onerror = () => reject(new Error("读取文件分片失败"));
+          reader.readAsArrayBuffer(chunk);
+        });
+
+        currentChunk++;
+        const progress = Math.round((currentChunk / totalChunks) * 100);
+
+        if (options?.onProgress) {
+          options.onProgress(progress);
+        }
+
+        if (currentChunk < totalChunks) {
+          // 继续上传下一个分片
+          setTimeout(() => uploadChunk(currentChunk), 10);
+        } else {
+          // 上传完成
+          if (options?.onComplete) {
+            options.onComplete();
+          }
+        }
+      } catch (error) {
+        if (options?.onError) {
+          options.onError(
+            error instanceof Error ? error : new Error("上传失败"),
+          );
+        }
+      }
+    };
+
+    // 开始上传
+    uploadChunk(0);
+
+    return {
+      cancel: () => {
+        cancelled = true;
+      },
+    };
   }
 
   /**
