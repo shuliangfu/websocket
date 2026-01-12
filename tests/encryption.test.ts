@@ -1455,9 +1455,12 @@ describe("WebSocket 加密 - 边界情况", () => {
       let receivedBinary: any = null;
 
       server.on("connection", (socket) => {
-        socket.on("binary", (data: any) => {
-          receivedBinary = data;
-        });
+        // 等待连接完全建立后再设置监听器
+        setTimeout(() => {
+          socket.on("binary", (data: any) => {
+            receivedBinary = data;
+          });
+        }, 100);
       });
 
       server.listen();

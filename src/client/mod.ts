@@ -215,9 +215,14 @@ export class Client {
    * @param data 消息数据
    */
   private handleMessage(data: string | ArrayBuffer | Blob): void {
-    // 如果是二进制消息，直接触发 binary 事件
+    // 如果是二进制消息，直接触发 binary 事件（不通过 emit，避免自动发送）
     if (data instanceof ArrayBuffer || data instanceof Blob) {
-      this.emit("binary", data);
+      const listeners = this.listeners.get("binary");
+      if (listeners) {
+        for (const listener of listeners) {
+          listener(data);
+        }
+      }
       return;
     }
 
@@ -237,9 +242,14 @@ export class Client {
         return;
       }
 
-      // 处理二进制消息
+      // 处理二进制消息（不通过 emit，避免自动发送）
       if (message.type === "binary") {
-        this.emit("binary", message.data);
+        const listeners = this.listeners.get("binary");
+        if (listeners) {
+          for (const listener of listeners) {
+            listener(message.data);
+          }
+        }
         return;
       }
 
