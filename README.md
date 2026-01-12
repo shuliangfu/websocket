@@ -54,6 +54,12 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
   - 自动加密/解密
   - 密钥管理（随机生成、密码派生）
   - 混合加密场景支持
+- **分布式适配器**：
+  - 支持 Redis 适配器（Pub/Sub 模式）
+  - 支持 MongoDB 适配器（Change Streams 或轮询模式）
+  - 支持单节点副本集配置
+  - 多服务器场景的消息广播和房间管理
+  - 自动服务器注册和发现
 
 ---
 
@@ -390,6 +396,7 @@ new Server(options?: ServerOptions)
 - `pingInterval?: number`: 心跳间隔（默认：30000ms）
 - `maxConnections?: number`: 最大连接数
 - `encryption?: EncryptionConfig`: 加密配置
+- `adapter?: WebSocketAdapter`: 分布式适配器（Redis、MongoDB 或 Memory）
 
 **方法**：
 - `listen(host?: string, port?: number): void`: 启动服务器
@@ -480,6 +487,14 @@ new Client(options: ClientOptions)
 - **心跳检测**：自动检测和清理无效连接，避免资源浪费
 - **连接池管理**：高效的连接池管理，支持大量并发连接
 - **异步操作**：所有操作都是异步的，不阻塞主线程
+- **消息缓存**：自动缓存序列化消息，减少重复序列化开销
+- **批量发送**：大量连接时自动分批发送消息，避免阻塞
+- **批量心跳**：集中管理心跳，减少定时器数量
+- **消息队列**：缓冲和批量处理消息，提高吞吐量
+- **加密缓存**：缓存加密结果，避免重复加密
+- **分布式优化**：支持 Redis 和 MongoDB 分布式部署，实现水平扩展
+
+详细优化方案请参考 [OPTIMIZATION.md](./OPTIMIZATION.md)
 
 ---
 

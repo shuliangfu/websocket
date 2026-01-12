@@ -166,6 +166,25 @@ export class Server {
         await result;
       }
     }
+
+    // 设置适配器的消息回调（用于接收来自其他服务器的消息）
+    if (this.adapter?.subscribe) {
+      const subscribeResult = this.adapter.subscribe(
+        (message, fromServerId) => {
+          // 忽略来自自己的消息
+          if (fromServerId === this.serverId) {
+            return;
+          }
+
+          // 处理来自其他服务器的消息
+          this.handleAdapterMessage(message, fromServerId);
+        },
+      );
+      if (subscribeResult instanceof Promise) {
+        await subscribeResult;
+      }
+    }
+
     const serverHost = host || this.options.host || "0.0.0.0";
     const serverPort = port || this.options.port || 8080;
 
@@ -588,6 +607,64 @@ export class Server {
   batchEmitToRooms(rooms: string[], event: string, data?: any): void {
     for (const room of rooms) {
       this.emitToRoom(room, event, data);
+    }
+  }
+
+  /**
+   * 处理来自适配器的消息（来自其他服务器）
+   * @param message 消息数据
+   * @param _fromServerId 发送消息的服务器 ID
+   */
+  private async handleAdapterMessage(
+    message: import("./adapters/types.ts").MessageData,
+    _fromServerId: string,
+  ): Promise<void> {
+    // 如果是房间广播消息
+    if (message.room && message.event) {
+      // 向房间内的本地 Socket 发送消息（排除指定的 Socket）
+      // 注意：这里直接调用 roomManager，不通过适配器，避免循环
+      await this.roomManager.emitToRoom(
+        message.room,
+        message.event,
+        message.data,
+        message.excludeSocketId,
+        this.messageCache,
+        this.encryptionManager,
+      );
+    } else if (message.event) {
+      // 全局广播消息
+      // 注意：这里直接发送给本地 Socket，不通过适配器，避免循环
+      const sockets = Array.from(this.sockets.entries()).filter(
+        ([socketId, socket]) =>
+          socketId !== message.excludeSocketId && socket.connected,
+      );
+
+      if (sockets.length === 0) {
+        return;
+      }
+
+      // 构建消息对象
+      const msg = {
+        type: "event" as const,
+        event: message.event,
+        data: message.data,
+      };
+
+      // 使用缓存优化序列化
+      if (this.messageCache && sockets.length > 1) {
+        const serialized = await this.messageCache.serialize(
+          msg,
+          this.encryptionManager,
+        );
+        for (const [, socket] of sockets) {
+          socket.sendRaw(serialized);
+        }
+      } else {
+        // 单个连接或未启用缓存，直接发送
+        for (const [, socket] of sockets) {
+          socket.emit(message.event, message.data);
+        }
+      }
     }
   }
 

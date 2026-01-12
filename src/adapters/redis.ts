@@ -130,7 +130,7 @@ export class RedisAdapter implements WebSocketAdapter {
       // 动态导入 Redis 客户端（根据运行时环境选择）
       try {
         // 尝试使用 redis（推荐）
-        const { createClient } = await import("npm:redis@4");
+        const { createClient } = await import("redis");
         this.internalClient = createClient({
           url: this.connectionConfig.url ||
             `redis://${this.connectionConfig.host || "127.0.0.1"}:${
@@ -153,12 +153,15 @@ export class RedisAdapter implements WebSocketAdapter {
 
   /**
    * 连接到 Redis Pub/Sub
+   * 注意：需要创建两个独立的客户端，一个用于订阅，一个用于发布
+   * 因为在订阅模式下，客户端不能执行其他命令（如 publish）
    */
   private async connectPubSub(): Promise<void> {
     if (this.pubsubConnectionConfig && !this.internalPubsubClient) {
       try {
-        const { createClient } = await import("npm:redis@4");
-        this.internalPubsubClient = createClient({
+        const { createClient } = await import("redis");
+        // 创建订阅客户端（用于接收消息）
+        const subscribeClient = createClient({
           url: this.pubsubConnectionConfig.url ||
             `redis://${this.pubsubConnectionConfig.host || "127.0.0.1"}:${
               this.pubsubConnectionConfig.port || 6379
@@ -166,8 +169,55 @@ export class RedisAdapter implements WebSocketAdapter {
           password: this.pubsubConnectionConfig.password,
           database: this.pubsubConnectionConfig.db || 0,
         });
-        await this.internalPubsubClient.connect();
-        this.pubsubClient = this.internalPubsubClient as any;
+        await subscribeClient.connect();
+
+        // 创建发布客户端（用于发送消息）
+        // 使用 duplicate() 方法创建副本，或者创建新客户端
+        const publishClient = subscribeClient.duplicate
+          ? subscribeClient.duplicate()
+          : createClient({
+            url: this.pubsubConnectionConfig.url ||
+              `redis://${this.pubsubConnectionConfig.host || "127.0.0.1"}:${
+                this.pubsubConnectionConfig.port || 6379
+              }`,
+            password: this.pubsubConnectionConfig.password,
+            database: this.pubsubConnectionConfig.db || 0,
+          });
+
+        if (publishClient.connect) {
+          await publishClient.connect();
+        }
+
+        // 订阅客户端用于订阅，发布客户端用于发布
+        // 创建一个包装对象，将订阅和发布分开
+        this.internalPubsubClient = {
+          subscribeClient,
+          publishClient,
+        } as any;
+
+        // 创建一个统一的接口
+        this.pubsubClient = {
+          subscribe: async (
+            channel: string,
+            callback: (payload: string) => void,
+          ) => {
+            await subscribeClient.subscribe(channel, callback);
+          },
+          unsubscribe: async (channel: string) => {
+            await subscribeClient.unsubscribe(channel);
+          },
+          publish: async (channel: string, message: string) => {
+            return await publishClient.publish(channel, message);
+          },
+          quit: async () => {
+            await subscribeClient.quit();
+            await publishClient.quit();
+          },
+          disconnect: async () => {
+            await subscribeClient.disconnect();
+            await publishClient.disconnect();
+          },
+        } as any;
       } catch (error) {
         throw new Error(
           `无法创建 Redis Pub/Sub 客户端: ${

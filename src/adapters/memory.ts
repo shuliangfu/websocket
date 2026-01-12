@@ -74,31 +74,33 @@ export class MemoryAdapter implements WebSocketAdapter {
     return Array.from(this.socketRooms.get(socketId) || []);
   }
 
+  // 以下方法在单机模式下不需要实现，但为了满足接口要求必须存在
   broadcast(_message: MessageData): void {
-    // 内存适配器不需要跨服务器广播
+    // 单机模式：不需要跨服务器广播
   }
 
   broadcastToRoom(_room: string, _message: MessageData): void {
-    // 内存适配器不需要跨服务器广播
+    // 单机模式：不需要跨服务器广播
   }
 
   subscribe(_callback: (message: MessageData, serverId: string) => void): void {
-    // 内存适配器不需要订阅
+    // 单机模式：不需要订阅其他服务器的消息
   }
 
   unsubscribe(): void {
-    // 内存适配器不需要取消订阅
+    // 单机模式：不需要取消订阅
   }
 
   getServerIds(): string[] {
+    // 单机模式：只返回当前服务器 ID
     return [this.serverId];
   }
 
   registerServer(): void {
-    // 内存适配器不需要注册
+    // 单机模式：不需要注册到分布式系统
   }
 
   unregisterServer(): void {
-    // 内存适配器不需要注销
+    // 单机模式：不需要从分布式系统注销
   }
 }

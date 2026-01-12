@@ -508,7 +508,7 @@ export class Socket {
    * 发送已序列化的消息（优化方法，用于批量发送）
    * @param serialized 已序列化的消息字符串
    */
-  sendRaw(serialized: string): void {
+  public sendRaw(serialized: string): void {
     // 检查是否是 WebSocketAdapter（通过检查是否有 pendingOperations 属性）
     const isAdapter = typeof (this.ws as any).pendingOperations !== "undefined";
 
