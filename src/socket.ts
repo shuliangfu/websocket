@@ -248,7 +248,13 @@ export class Socket {
     }
 
     // 如果没有找到对应的上传，作为普通二进制消息处理
-    this.emit("binary", data);
+    // 直接触发监听器，不通过 emit（避免 emit 检测到二进制数据后自动发送）
+    const listeners = this.listeners.get("binary");
+    if (listeners) {
+      for (const listener of listeners) {
+        listener(data);
+      }
+    }
   }
 
   /**
