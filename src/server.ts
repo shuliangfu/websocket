@@ -147,7 +147,20 @@ export class Server {
    * @param host 主机地址（可选）
    * @param port 端口号（可选）
    */
-  listen(host?: string, port?: number): void {
+  async listen(host?: string, port?: number): Promise<void> {
+    // 如果适配器未初始化，使用默认的内存适配器
+    if (!this.adapter) {
+      const { MemoryAdapter } = await import("./adapters/memory.ts");
+      this.adapter = new MemoryAdapter();
+    }
+    
+    // 确保适配器已初始化
+    if (this.adapter?.init) {
+      const result = this.adapter.init(this.serverId, this.sockets);
+      if (result instanceof Promise) {
+        await result;
+      }
+    }
     const serverHost = host || this.options.host || "0.0.0.0";
     const serverPort = port || this.options.port || 8080;
 
