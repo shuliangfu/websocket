@@ -1,21 +1,21 @@
 /**
  * @fileoverview MongoDB 适配器示例
  * 演示如何使用 MongoDB 适配器实现多服务器分布式 WebSocket 部署
- * 
+ *
  * 使用场景：
  * - 多服务器实例部署
  * - 跨服务器的消息广播
  * - 跨服务器的房间管理
  * - 已有 MongoDB 基础设施的场景
- * 
+ *
  * 运行前准备：
  * 1. 确保 MongoDB 服务器正在运行（默认 localhost:27017）
  * 2. 推荐使用副本集模式（Change Streams），也可以使用单节点模式（轮询降级）
  * 3. 可以启动多个服务器实例测试分布式功能
- * 
+ *
  * 运行方式：
  * deno run --allow-net --allow-env examples/mongodb-adapter-example.ts
- * 
+ *
  * 或者启动多个实例（不同端口）：
  * PORT=8080 deno run --allow-net --allow-env examples/mongodb-adapter-example.ts
  * PORT=8081 deno run --allow-net --allow-env examples/mongodb-adapter-example.ts
