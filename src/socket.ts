@@ -116,6 +116,12 @@ export class Socket {
   private setupMessageHandler(): void {
     const messageHandler = async (event: MessageEvent) => {
       try {
+        // 如果是二进制消息，直接处理，不经过 parseMessage
+        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
+          this.handleBinaryMessage(event.data);
+          return;
+        }
+
         // 解析消息（自动解密）
         const message = await parseMessage(event.data, this.encryptionManager);
 

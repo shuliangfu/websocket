@@ -49,9 +49,10 @@ export async function parseMessage(
         // JSON 解析失败，可能是加密的 Base64 字符串（当没有加密管理器时）
         // 或者格式不正确的消息
         // 返回原始字符串作为事件数据，以便测试可以检查
+        // 使用 "encrypted" 作为事件名，表示这是加密的消息
         return {
           type: "event",
-          event: "message",
+          event: "encrypted",
           data: jsonString,
         };
       }

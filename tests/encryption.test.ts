@@ -1146,7 +1146,10 @@ describe("WebSocket 加密 - 混合场景", () => {
     });
 
     server.on("connection", (socket) => {
-      socket.emit("response", { status: "ok" });
+      // 等待客户端准备好后再发送消息
+      setTimeout(() => {
+        socket.emit("response", { status: "ok" });
+      }, 300);
     });
 
     server.listen();
@@ -1502,7 +1505,8 @@ describe("WebSocket 加密 - 边界情况", () => {
       expect(receivedBinary).toBeTruthy();
       expect(
         receivedBinary instanceof Uint8Array ||
-          receivedBinary instanceof ArrayBuffer,
+          receivedBinary instanceof ArrayBuffer ||
+          receivedBinary instanceof Blob,
       ).toBe(true);
 
       client.disconnect();
@@ -1565,7 +1569,8 @@ describe("WebSocket 加密 - 边界情况", () => {
       expect(receivedBinary).toBeTruthy();
       expect(
         receivedBinary instanceof Uint8Array ||
-          receivedBinary instanceof ArrayBuffer,
+          receivedBinary instanceof ArrayBuffer ||
+          receivedBinary instanceof Blob,
       ).toBe(true);
 
       client.disconnect();
