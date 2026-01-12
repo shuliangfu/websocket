@@ -478,6 +478,95 @@ new Client(options: ClientOptions)
 - `rateLimitMiddleware(options: { maxConnections?: number; maxMessagesPerSecond?: number }): Middleware`: 限流中间件
 - `corsMiddleware(options: { origin?: string | string[] | ((origin: string) => boolean) }): Middleware`: CORS 中间件
 
+### 分布式适配器
+
+#### RedisAdapter
+
+Redis 分布式适配器，使用 Redis Pub/Sub 实现多服务器通信。
+
+**构造函数**：
+```typescript
+new RedisAdapter(options: RedisAdapterOptions)
+```
+
+**选项**：
+- `connection?: RedisConnectionConfig`: Redis 连接配置
+  - `host?: string`: 主机地址（默认："127.0.0.1"）
+  - `port?: number`: 端口号（默认：6379）
+  - `url?: string`: Redis 连接 URL
+- `keyPrefix?: string`: 键前缀（默认："ws"）
+- `heartbeatInterval?: number`: 心跳间隔（秒，默认：5）
+
+**示例**：
+```typescript
+import { RedisAdapter } from "jsr:@dreamer/websocket";
+
+const adapter = new RedisAdapter({
+  connection: {
+    host: "127.0.0.1",
+    port: 6379,
+  },
+  keyPrefix: "ws",
+  heartbeatInterval: 5,
+});
+```
+
+#### MongoDBAdapter
+
+MongoDB 分布式适配器，使用 Change Streams 或轮询实现多服务器通信。
+
+**构造函数**：
+```typescript
+new MongoDBAdapter(options: MongoDBAdapterOptions)
+```
+
+**选项**：
+- `connection: MongoDBConnectionConfig`: MongoDB 连接配置
+  - `url?: string`: MongoDB 连接 URL
+  - `host?: string`: 主机地址
+  - `port?: number`: 端口号（默认：27017）
+  - `database: string`: 数据库名称
+  - `username?: string`: 用户名
+  - `password?: string`: 密码
+  - `replicaSet?: string`: 副本集名称（用于单节点副本集）
+  - `directConnection?: boolean`: 是否直接连接（默认：false，当使用副本集时）
+- `keyPrefix?: string`: 键前缀（默认："ws"）
+- `heartbeatInterval?: number`: 心跳间隔（秒，默认：5）
+
+**示例**：
+```typescript
+import { MongoDBAdapter } from "jsr:@dreamer/websocket";
+
+// 副本集模式（推荐，使用 Change Streams）
+const adapter = new MongoDBAdapter({
+  connection: {
+    host: "127.0.0.1",
+    port: 27017,
+    database: "websocket",
+    replicaSet: "rs0",
+    directConnection: false,
+  },
+  keyPrefix: "ws",
+  heartbeatInterval: 5,
+});
+
+// 单节点模式（自动降级到轮询，500ms 间隔）
+const adapter = new MongoDBAdapter({
+  connection: {
+    host: "127.0.0.1",
+    port: 27017,
+    database: "websocket",
+  },
+  keyPrefix: "ws",
+  heartbeatInterval: 5,
+});
+```
+
+**说明**：
+- **Change Streams**：需要 MongoDB 副本集，提供实时消息订阅（推荐）
+- **轮询降级**：单节点模式下自动使用 500ms 轮询间隔
+- **单节点副本集**：支持将单节点配置为副本集，启用 Change Streams
+
 ---
 
 ## ⚡ 性能优化
