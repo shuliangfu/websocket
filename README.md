@@ -375,6 +375,84 @@ client.on("disconnect", (reason) => {
 });
 ```
 
+### 分布式部署（适配器）
+
+当需要部署多个 WebSocket 服务器实例时，需要使用分布式适配器来实现服务器间的消息同步。适配器负责：
+- **消息广播**：将消息广播到所有服务器实例
+- **房间管理**：同步房间成员信息
+- **服务器发现**：自动注册和发现服务器实例
+
+默认情况下，服务器使用内存适配器（单服务器模式）。对于多服务器部署，需要配置 Redis 或 MongoDB 适配器。
+
+#### Redis 适配器
+
+```typescript
+import { Server, RedisAdapter } from "jsr:@dreamer/websocket";
+
+// 创建使用 Redis 适配器的服务器
+const io = new Server({
+  port: 8080,
+  path: "/ws",
+  adapter: new RedisAdapter({
+    connection: {
+      host: "127.0.0.1",
+      port: 6379,
+    },
+    keyPrefix: "ws",
+    heartbeatInterval: 5, // 5 秒心跳
+  }),
+});
+
+io.on("connection", (socket) => {
+  socket.on("message", (data) => {
+    // 消息会自动广播到所有服务器实例
+    io.broadcast("message", data);
+  });
+});
+
+io.listen();
+```
+
+#### MongoDB 适配器
+
+```typescript
+import { Server, MongoDBAdapter } from "jsr:@dreamer/websocket";
+
+// 创建使用 MongoDB 适配器的服务器
+const io = new Server({
+  port: 8080,
+  path: "/ws",
+  adapter: new MongoDBAdapter({
+    connection: {
+      host: "127.0.0.1",
+      port: 27017,
+      database: "websocket",
+      // 副本集模式（推荐，使用 Change Streams）
+      replicaSet: "rs0",
+      directConnection: false,
+    },
+    keyPrefix: "ws",
+    heartbeatInterval: 5, // 5 秒心跳
+  }),
+});
+
+io.on("connection", (socket) => {
+  socket.on("message", (data) => {
+    // 消息会自动广播到所有服务器实例
+    io.broadcast("message", data);
+  });
+});
+
+io.listen();
+```
+
+**适配器选择建议**：
+- **单服务器**：无需配置适配器，使用默认内存适配器
+- **多服务器 + Redis**：推荐使用 Redis 适配器，性能好，延迟低
+- **多服务器 + MongoDB**：如果已有 MongoDB 基础设施，可使用 MongoDB 适配器
+  - 副本集模式：使用 Change Streams，实时性好（推荐）
+  - 单节点模式：自动降级到轮询，500ms 延迟
+
 ---
 
 ## 📚 API 文档
