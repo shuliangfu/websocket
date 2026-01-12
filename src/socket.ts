@@ -117,8 +117,31 @@ export class Socket {
     const messageHandler = async (event: MessageEvent) => {
       try {
         // 如果是二进制消息，直接处理，不经过 parseMessage
-        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-          this.handleBinaryMessage(event.data);
+        // Bun 环境下可能返回 Uint8Array，Deno 环境下返回 ArrayBuffer 或 Blob
+        if (
+          event.data instanceof ArrayBuffer ||
+          event.data instanceof Blob ||
+          event.data instanceof Uint8Array
+        ) {
+          // 如果是 Uint8Array，转换为 ArrayBuffer
+          let binaryData: ArrayBuffer | Blob;
+          if (event.data instanceof Uint8Array) {
+            const buffer = event.data.buffer.slice(
+              event.data.byteOffset,
+              event.data.byteOffset + event.data.byteLength,
+            );
+            // 处理 SharedArrayBuffer 的情况
+            if (buffer instanceof SharedArrayBuffer) {
+              const newBuffer = new ArrayBuffer(buffer.byteLength);
+              new Uint8Array(newBuffer).set(new Uint8Array(buffer));
+              binaryData = newBuffer;
+            } else {
+              binaryData = buffer;
+            }
+          } else {
+            binaryData = event.data;
+          }
+          this.handleBinaryMessage(binaryData);
           return;
         }
 

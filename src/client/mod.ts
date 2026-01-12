@@ -214,13 +214,36 @@ export class Client {
    * 处理消息
    * @param data 消息数据
    */
-  private handleMessage(data: string | ArrayBuffer | Blob): void {
+  private handleMessage(data: string | ArrayBuffer | Blob | Uint8Array): void {
     // 如果是二进制消息，直接触发 binary 事件（不通过 emit，避免自动发送）
-    if (data instanceof ArrayBuffer || data instanceof Blob) {
+    // Bun 环境下可能返回 Uint8Array，Deno 环境下返回 ArrayBuffer 或 Blob
+    if (
+      data instanceof ArrayBuffer ||
+      data instanceof Blob ||
+      data instanceof Uint8Array
+    ) {
+      // 如果是 Uint8Array，转换为 ArrayBuffer
+      let binaryData: ArrayBuffer | Blob;
+      if (data instanceof Uint8Array) {
+        const buffer = data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        );
+        // 处理 SharedArrayBuffer 的情况
+        if (buffer instanceof SharedArrayBuffer) {
+          const newBuffer = new ArrayBuffer(buffer.byteLength);
+          new Uint8Array(newBuffer).set(new Uint8Array(buffer));
+          binaryData = newBuffer;
+        } else {
+          binaryData = buffer;
+        }
+      } else {
+        binaryData = data;
+      }
       const listeners = this.listeners.get("binary");
       if (listeners) {
         for (const listener of listeners) {
-          listener(data);
+          listener(binaryData);
         }
       }
       return;

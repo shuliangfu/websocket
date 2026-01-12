@@ -13,7 +13,7 @@ import type { WebSocketMessage } from "./types.ts";
  * @returns 解析后的消息对象
  */
 export async function parseMessage(
-  data: string | ArrayBuffer | Blob,
+  data: string | ArrayBuffer | Blob | Uint8Array,
   encryptionManager?: EncryptionManager,
 ): Promise<WebSocketMessage> {
   try {
@@ -56,6 +56,12 @@ export async function parseMessage(
           data: jsonString,
         };
       }
+    } else if (data instanceof Uint8Array) {
+      // 二进制消息：Uint8Array（Bun 环境）
+      return {
+        type: "binary",
+        data: new Uint8Array(data),
+      };
     } else if (data instanceof ArrayBuffer) {
       // 二进制消息：ArrayBuffer
       return {

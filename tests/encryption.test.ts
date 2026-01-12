@@ -1266,7 +1266,7 @@ describe("WebSocket 加密 - 性能测试", () => {
       await delay(100);
       retries++;
     }
-    
+
     expect(receivedMessages.length).toBe(100);
     // 验证消息顺序（可能不是完全有序，但应该包含所有ID）
     const receivedIds = new Set(receivedMessages.map((m: any) => m.id));
