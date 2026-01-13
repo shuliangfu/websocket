@@ -192,7 +192,7 @@ export class Server {
     this.httpServer = serve(
       {
         port: serverPort,
-        hostname: serverHost === "0.0.0.0" ? undefined : serverHost,
+        host: serverHost === "0.0.0.0" ? undefined : serverHost,
       },
       async (request: Request) => {
         // 检查路径
