@@ -3,7 +3,8 @@
 > 一个兼容 Deno 和 Bun 的 WebSocket 工具库，提供 WebSocket 服务器功能，支持实时双向通信
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
+[![Tests](https://img.shields.io/badge/tests-123%20passed-brightgreen)](./TEST_REPORT.md)
 
 ---
 

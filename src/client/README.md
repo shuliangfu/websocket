@@ -3,7 +3,7 @@
 > 一个用于浏览器的 WebSocket 客户端库，提供 WebSocket 客户端功能，支持实时双向通信
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket/client)](https://jsr.io/@dreamer/websocket/client)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE.md)
 
 ---
 

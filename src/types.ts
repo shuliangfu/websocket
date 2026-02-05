@@ -35,6 +35,10 @@ export interface ServerOptions {
   pingInterval?: number;
   /** 最大连接数（默认：无限制） */
   maxConnections?: number;
+  /** Logger 实例（可选，用于统一日志输出；未提供时创建默认 logger） */
+  logger?: import("@dreamer/logger").Logger;
+  /** 是否启用调试日志（默认：false），开启后通过 logger.debug 输出 WebSocket 请求路径、握手等调试信息 */
+  debug?: boolean;
   /** 加密配置（可选，启用后服务端会自动解密消息） */
   encryption?: EncryptionConfig;
   /** 分布式适配器（可选，用于多服务器实例） */
