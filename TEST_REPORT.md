@@ -1,555 +1,555 @@
-# @dreamer/websocket 测试报告
+# @dreamer/websocket Test Report
 
-## 测试概览
+## Test Overview
 
-- **测试库版本**: @dreamer/test@^1.0.0-beta.40
-- **测试框架**: @dreamer/test (兼容 Deno 和 Bun)
-- **测试时间**: 2026-02-06
-- **测试环境**:
+- **Test Library Version**: @dreamer/test@^1.0.0-beta.40
+- **Test Framework**: @dreamer/test (compatible with Deno and Bun)
+- **Test Date**: 2026-02-06
+- **Test Environment**:
   - **Deno**: 2.6.4
   - **Bun**: 1.3.5
 
-## 测试结果
-
-### 总体统计
-
-- **总测试数**: 156
-- **通过**: 156 ✅
-- **失败**: 0
-- **通过率**: 100% ✅
-- **测试执行时间**:
-  - Deno: ~134 秒 (2m14s)
-  - Bun: ~134 秒
-
-### 测试文件统计
-
-| 测试文件 | 测试数 | Deno 状态 | Bun 状态 | 说明 |
-|---------|--------|----------|----------|------|
-| `adapters-mongodb.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | MongoDB 分布式适配器 |
-| `adapters-redis.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | Redis 分布式适配器 |
-| `connection.test.ts` | 5 | ✅ 全部通过 | ✅ 全部通过 | WebSocket 连接和消息处理 |
-| `data-storage.test.ts` | 1 | ✅ 全部通过 | ✅ 全部通过 | Socket 数据存储 |
-| `disconnect.test.ts` | 3 | ✅ 全部通过 | ✅ 全部通过 | Socket 断开连接处理 |
-| `encryption.test.ts` | 56 | ✅ 全部通过 | ✅ 全部通过 | 消息加密功能 |
-| `error-handling.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 错误处理 |
-| `heartbeat.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 心跳检测 |
-| `logger-debug-i18n.test.ts` | 11 | ✅ 全部通过 | ✅ 全部通过 | logger、debug、t 参数及 i18n |
-| `middleware.test.ts` | 12 | ✅ 全部通过 | ✅ 全部通过 | 中间件系统 |
-| `namespace.test.ts` | 8 | ✅ 全部通过 | ✅ 全部通过 | 命名空间功能 |
-| `optimization.test.ts` | 21 | ✅ 全部通过 | ✅ 全部通过 | 优化功能（MessageCache、MessageQueue 等） |
-| `room.test.ts` | 7 | ✅ 全部通过 | ✅ 全部通过 | 房间管理 |
-| `runtime-compat.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 跨运行时兼容性 |
-| `server.test.ts` | 10 | ✅ 全部通过 | ✅ 全部通过 | 服务器功能 |
-| `socket-events.test.ts` | 4 | ✅ 全部通过 | ✅ 全部通过 | Socket 事件系统 |
-
-**总计**: 16 个测试文件，156 个测试用例，全部通过 ✅
-
-## 功能模块测试覆盖
-
-### 1. Server 构造函数和配置
-
-**测试场景**:
-- ✅ 应该创建服务器实例
-  - 创建 Server 实例
-  - 验证端口配置
-- ✅ 应该使用默认配置
-  - 默认路径为 "/"
-  - 默认心跳超时时间为 60000ms
-  - 默认心跳间隔为 30000ms
-- ✅ 应该支持自定义配置
-  - 自定义端口、主机、路径
-  - 自定义心跳超时和间隔
-  - 自定义最大连接数
-
-**测试结果**: 3 个测试全部通过
-
-### 2. Server 事件监听
-
-**测试场景**:
-- ✅ 应该支持 connection 事件监听
-  - 注册 connection 事件监听器
-- ✅ 应该支持多个 connection 监听器
-  - 支持多个监听器同时注册
-
-**测试结果**: 2 个测试全部通过
-
-### 3. WebSocket 连接和消息
-
-**测试场景**:
-- ✅ 应该接受 WebSocket 连接
-  - 客户端可以成功连接到服务器
-  - 服务器触发 connection 事件
-- ✅ 应该创建握手信息
-  - 握手信息包含 query、headers、address、url
-- ✅ 应该处理文本消息
-  - 服务器可以接收客户端发送的文本消息
-  - 消息解析正确
-- ✅ 应该发送消息到客户端
-  - 服务器可以主动向客户端发送消息
-  - 客户端可以正确接收消息
-- ✅ 应该处理心跳消息
-  - 自动处理 ping/pong 消息
-
-**测试结果**: 5 个测试全部通过
-
-### 4. Socket 事件系统
-
-**测试场景**:
-- ✅ 应该支持多个事件监听器
-  - 同一个事件可以注册多个监听器
-  - 所有监听器都会被调用
-- ✅ 应该支持移除事件监听器
-  - 使用 `off()` 移除指定监听器
-- ✅ 应该支持移除所有事件监听器
-  - 使用 `off()` 移除所有监听器
-- ✅ 应该支持回调函数
-  - 事件可以传递回调函数
-  - 回调函数可以返回响应
-
-**测试结果**: 4 个测试全部通过
-
-### 5. Socket 房间管理
-
-**测试场景**:
-- ✅ 应该支持加入房间
-  - 使用 `join()` 加入房间
-- ✅ 应该支持离开房间
-  - 使用 `leave()` 离开房间
-- ✅ 应该向房间发送消息
-  - 使用 `to(room).emit()` 向房间发送消息
-  - 房间内其他成员可以收到消息
-- ✅ 应该支持广播消息
-  - 使用 `broadcast.emit()` 向所有其他连接广播消息
-- ✅ 应该支持批量加入房间
-  - 使用 `join()` 批量加入多个房间
-- ✅ 应该支持批量离开房间
-  - 使用 `leave()` 批量离开多个房间
-- ✅ 应该支持批量向房间发送消息
-  - 使用 `batchEmitToRooms()` 批量向多个房间发送消息
-
-**测试结果**: 7 个测试全部通过
-
-### 6. Socket 断开连接
-
-**测试场景**:
-- ✅ 应该处理客户端断开连接
-  - 客户端主动断开时触发 disconnect 事件
-- ✅ 应该支持服务器主动断开连接
-  - 服务器调用 `disconnect()` 主动断开连接
-  - 客户端收到关闭事件
-- ✅ 应该清理房间成员
-  - 断开连接时自动从所有房间中移除
-
-**测试结果**: 3 个测试全部通过
-
-### 7. Socket 数据存储
-
-**测试场景**:
-- ✅ 应该支持数据存储
-  - 使用 `data` 属性存储自定义数据
-  - 数据在连接生命周期内保持
-
-**测试结果**: 1 个测试全部通过
-
-### 8. 错误处理
-
-**测试场景**:
-- ✅ 应该处理无效路径的请求
-  - 访问无效路径时返回 404
-- ✅ 应该处理无效 JSON 消息
-  - 收到无效 JSON 时触发 error 事件
-  - 连接不会因为错误而断开
-
-**测试结果**: 2 个测试全部通过
-
-### 9. 心跳检测
-
-**测试场景**:
-- ✅ 应该发送心跳消息
-  - 服务器按配置的间隔自动发送心跳
-  - 心跳超时后自动断开连接
-- ✅ 应该处理心跳响应
-  - 客户端响应心跳后重置超时定时器
-
-**测试结果**: 2 个测试全部通过
-
-### 10. 中间件系统
-
-**测试场景**:
-- ✅ 应该支持添加中间件
-  - 使用 `use()` 方法添加中间件
-- ✅ 应该支持异步中间件
-  - 支持异步中间件函数
-- ✅ 应该支持中间件错误处理
-  - 中间件可以调用 `next(error)` 传递错误
-- ✅ 应该支持认证中间件（通过）
-  - 使用 `authMiddleware` 进行身份验证
-- ✅ 应该支持认证中间件（拒绝）
-  - 认证失败时拒绝连接
-- ✅ 应该支持异步认证中间件
-  - 支持异步认证逻辑
-- ✅ 应该支持日志中间件
-  - 使用 `loggerMiddleware` 记录连接日志
-- ✅ 应该支持连接数限制
-  - 使用 `rateLimitMiddleware` 限制连接数
-- ✅ 应该支持消息频率限制
-  - 使用 `rateLimitMiddleware` 限制消息频率
-- ✅ 应该支持 CORS 中间件（允许）
-  - 使用 `corsMiddleware` 允许特定来源
-- ✅ 应该支持 CORS 中间件（函数验证）
-  - 使用函数动态验证来源
-- ✅ 应该支持 CORS 中间件（数组验证）
-  - 使用数组配置多个允许的来源
-
-**测试结果**: 12 个测试全部通过
-
-### 11. 命名空间功能
-
-**测试场景**:
-- ✅ 应该支持创建命名空间
-  - 使用 `of()` 创建命名空间
-- ✅ 应该支持命名空间名称验证
-  - 命名空间名称必须以 "/" 开头
-- ✅ 应该支持命名空间连接
-  - 客户端可以连接到特定命名空间
-- ✅ 应该支持命名空间中间件
-  - 命名空间可以有自己的中间件
-- ✅ 应该支持多个命名空间
-  - 可以同时创建多个命名空间
-- ✅ 应该支持获取所有命名空间
-  - 使用 `getAll()` 获取所有命名空间
-- ✅ 应该支持重复获取同一命名空间
-  - 重复调用 `of()` 返回同一个实例
-- ✅ 应该支持命名空间隔离
-  - 不同命名空间的消息互不干扰
-
-**测试结果**: 8 个测试全部通过
-
-### 12. 消息加密功能
-
-**测试场景**:
-
-#### EncryptionManager 构造函数
-- ✅ 应该使用 Uint8Array 密钥创建实例
-- ✅ 应该使用字符串密钥创建实例
-- ✅ 应该根据密钥长度自动选择算法（32字节 -> AES-256）
-- ✅ 应该根据密钥长度自动选择算法（16字节 -> AES-128）
-- ✅ 应该支持指定算法
-- ✅ 应该支持所有算法类型
-- ✅ 应该拒绝无效的密钥长度
-- ✅ 应该拒绝算法和密钥长度不匹配
-- ✅ 应该支持禁用加密
-
-#### EncryptionManager 加密和解密
-- ✅ 应该能够加密和解密消息
-- ✅ 应该能够加密和解密复杂 JSON 数据
-- ✅ 应该支持 AES-256-GCM 算法
-- ✅ 应该支持 AES-128-GCM 算法
-- ✅ 应该支持 AES-256-CBC 算法
-- ✅ 应该支持 AES-128-CBC 算法
-- ✅ 应该拒绝使用错误密钥解密
-- ✅ 应该拒绝解密无效的加密数据
-- ✅ 禁用加密时应该直接返回原始消息
-
-#### EncryptionManager isEncrypted 方法
-- ✅ 应该正确识别加密消息
-- ✅ 应该正确识别 JSON 消息
-
-#### EncryptionManager 静态方法
-- ✅ 应该能够生成随机密钥（AES-256）
-- ✅ 应该能够生成随机密钥（AES-128）
-- ✅ 应该能够从密码派生密钥（AES-256）
-- ✅ 应该能够从密码派生密钥（AES-128）
-- ✅ 相同密码应该派生相同密钥
-- ✅ 不同密码应该派生不同密钥
-
-#### WebSocket 加密 - 服务端
-- ✅ 应该能够接收并自动解密客户端发送的加密消息
-- ✅ 应该能够处理多个加密消息
-- ✅ 应该能够发送自动加密的消息给客户端
-
-#### WebSocket 加密 - 客户端
-- ✅ 应该能够发送自动加密的消息给服务端
-- ✅ 应该能够接收并自动解密服务端发送的加密消息
-
-#### WebSocket 加密 - 端到端
-- ✅ 应该支持双向加密通信
-- ✅ 应该支持回调机制与加密
-- ✅ 应该支持 aes-256-gcm 算法的端到端加密
-- ✅ 应该支持 aes-128-gcm 算法的端到端加密
-- ✅ 应该支持 aes-256-cbc 算法的端到端加密
-- ✅ 应该支持 aes-128-cbc 算法的端到端加密
-- ✅ 应该拒绝使用不同密钥的客户端
-- ✅ 应该支持使用字符串密钥
-- ✅ 应该支持使用密码派生的密钥
-
-#### WebSocket 加密 - 混合场景
-- ✅ 应该支持未加密的服务端和加密的客户端
-- ✅ 应该支持加密的服务端和未加密的客户端
-
-#### WebSocket 加密 - 性能测试
-- ✅ 应该能够处理大量加密消息
-
-#### WebSocket 加密 - 边界情况
-- ✅ 应该能够加密和解密空字符串
-- ✅ 应该能够加密和解密包含 Unicode 字符的字符串
-- ✅ 应该能够加密和解密超长字符串
-- ✅ 应该能够加密和解密包含特殊字符的 JSON
-- ✅ 应该正确处理空字符串（isEncrypted）
-- ✅ 应该正确识别短 Base64 字符串（不是加密消息）
-- ✅ 应该正确识别非 Base64 字符串
-- ✅ 应该正确识别有效的 Base64 但非加密消息
-- ✅ 应该正确处理解密失败的消息（密钥不匹配）
-- ✅ 应该正确处理无效的加密消息格式
-- ✅ 应该正确处理加密过程中的错误
-- ✅ 二进制消息不应该被加密（客户端）
-- ✅ 二进制消息不应该被加密（服务端）
-
-**测试结果**: 56 个测试全部通过
-
-### 13. 跨运行时兼容性
-
-**测试场景**:
-- ✅ 应该在 Deno 环境下工作
-  - 检测 Deno 运行时环境
-- ✅ 应该在 Bun 环境下工作
-  - 检测 Bun 运行时环境
-
-**测试结果**: 2 个测试全部通过
-
-### 14. 分布式适配器 - Redis
-
-**测试场景**:
-- ✅ 应该能够初始化和关闭适配器
-  - Redis 适配器可以成功初始化和关闭
-  - 正确连接到 Redis 服务器
-- ✅ 应该支持添加和移除 Socket 到房间
-  - 可以添加 Socket 到房间
-  - 可以移除 Socket 从房间
-  - 可以查询房间内的 Socket 列表
-- ✅ 应该支持服务器注册和注销
-  - 服务器可以注册到 Redis
-  - 服务器可以注销
-  - 可以查询所有服务器 ID
-- ✅ 应该支持消息广播和订阅（多服务器场景）
-  - 多个服务器实例可以互相通信
-  - 消息可以跨服务器广播
-  - 订阅机制正常工作
-- ✅ 应该支持房间广播（多服务器场景）
-  - 房间消息可以跨服务器广播
-  - 房间内所有 Socket 都能收到消息
-- ✅ 应该支持多服务器场景的房间管理
-  - 多个服务器可以管理同一个房间
-  - 房间成员信息正确同步
-
-**测试结果**: 6 个测试全部通过
-
-### 15. 分布式适配器 - MongoDB
-
-**测试场景**:
-- ✅ 应该能够初始化和关闭适配器
-  - MongoDB 适配器可以成功初始化和关闭
-  - 正确连接到 MongoDB 数据库
-  - 支持单节点副本集配置
-- ✅ 应该支持添加和移除 Socket 到房间
-  - 可以添加 Socket 到房间
-  - 可以移除 Socket 从房间
-  - 可以查询房间内的 Socket 列表
-- ✅ 应该支持服务器注册和注销
-  - 服务器可以注册到 MongoDB
-  - 服务器可以注销
-  - 可以查询所有服务器 ID
-- ✅ 应该支持消息广播和订阅（多服务器场景）
-  - 多个服务器实例可以互相通信
-  - 支持 Change Streams（副本集模式）
-  - 支持轮询降级方案（单节点模式）
-  - 消息可以跨服务器广播
-- ✅ 应该支持房间广播（多服务器场景）
-  - 房间消息可以跨服务器广播
-  - 房间内所有 Socket 都能收到消息
-- ✅ 应该支持多服务器场景的房间管理
-  - 多个服务器可以管理同一个房间
-  - 房间成员信息正确同步
-
-**测试结果**: 6 个测试全部通过
-
-### 16. logger、debug、t 参数
-
-**测试场景**:
-- ✅ 应该使用传入的自定义 logger
-- ✅ 未传入 logger 时应使用默认 logger
-- ✅ debug=true 时应在收到请求时调用 logger.debug
-- ✅ debug=false 时不应调用 logger.debug
-- ✅ 传入 t 函数时 debug 日志应使用翻译结果
-- ✅ server.tr 应使用 t 函数的返回值
-- ✅ t 返回 key 或 undefined 时应使用 fallback
-- ✅ loggerMiddleware 应使用传入的自定义 logger 记录连接日志
-- ✅ loggerMiddleware 应使用 server.tr 进行翻译
-- ✅ MongoDBAdapter 应支持 t 参数进行错误信息翻译
-- ✅ 认证失败时 authMiddleware 应使用 server.tr 翻译错误信息
-
-**测试结果**: 11 个测试全部通过
-
-### 17. 优化功能（MessageCache、MessageQueue、BatchHeartbeatManager 等）
-
-**测试场景**:
-
-#### fnv1aHash 快速哈希
-- ✅ 相同输入应产生相同哈希
-- ✅ 不同输入应产生不同哈希
-- ✅ 应返回十六进制字符串
-
-#### MessageCache 消息序列化缓存
-- ✅ 相同消息应命中缓存返回相同序列化结果
-- ✅ getStats 应返回正确统计
-- ✅ 超过 maxSize 时应驱逐最久未使用项（LRU）
-- ✅ clear 应清空缓存
-
-#### MessageQueue 消息队列
-- ✅ enqueue 应成功入队且 getStats 返回有效值
-- ✅ getStats 应返回正确统计
-- ✅ clear 应清空队列
-- ✅ onError 应在发送失败时被调用
-
-#### BatchHeartbeatManager 批量心跳管理器
-- ✅ add 应增加管理的 Socket 数量
-- ✅ remove 应减少管理的 Socket 数量
-- ✅ handlePong 应更新最后心跳时间（不抛错）
-- ✅ clear 应清空所有 Socket
-
-#### Server getStats 统计信息
-- ✅ 应包含 messageQueue 和 messageCache 统计
-- ✅ 禁用 messageCache 时不应包含 messageCache 统计
-- ✅ 禁用 messageQueue 时不应包含 messageQueue 统计
-
-#### useMessageQueue 广播通过消息队列
-- ✅ useMessageQueue=true 时 broadcast 应通过队列发送
-- ✅ useMessageQueue=true 时 emitToRoom 应通过队列发送
-
-#### useBatchHeartbeat 批量心跳
-- ✅ useBatchHeartbeat=true 时应能正常收发心跳
-
-**测试结果**: 21 个测试全部通过
-
-## 跨运行时兼容性测试
-
-### Deno 环境测试
-
-- **测试数**: 156
-- **通过**: 156 ✅
-- **失败**: 0
-- **执行时间**: ~134 秒 (2m14s)
-
-### Bun 环境测试
-
-- **测试数**: 156
-- **通过**: 156 ✅
-- **失败**: 0
-- **执行时间**: ~134 秒 (2m14s)
-
-**兼容性结论**: ✅ 完全兼容 Deno 和 Bun 运行时
-
-## 性能测试
-
-### 连接建立性能
-
-- **单连接建立时间**: < 1 秒
-- **多连接并发**: 支持并发连接建立
-
-### 消息处理性能
-
-- **消息发送延迟**: < 100ms
-- **消息接收延迟**: < 100ms
-- **房间广播延迟**: < 500ms（4 个连接）
-- **加密消息处理**: < 1.5 秒（包括加密/解密）
-
-### 心跳检测性能
-
-- **心跳发送间隔**: 可配置（默认 30 秒）
-- **心跳超时检测**: 可配置（默认 60 秒）
-
-### 加密性能
-
-- **单条消息加密**: < 5ms
-- **单条消息解密**: < 5ms
-- **大量消息处理**: 100 条消息 < 1 秒
-
-## 测试覆盖分析
-
-### 代码覆盖率
-
-- **Server 类**: 100% ✅
-- **Socket 类**: 100% ✅
-- **EncryptionManager 类**: 100% ✅
-- **事件系统**: 100% ✅
-- **房间管理**: 100% ✅
-- **心跳检测**: 100% ✅
-- **错误处理**: 100% ✅
-- **中间件系统**: 100% ✅
-- **命名空间**: 100% ✅
-
-### 功能覆盖
-
-- ✅ 服务器启动和关闭
-- ✅ 连接管理
-- ✅ 消息收发（文本、二进制）
-- ✅ 事件系统
-- ✅ 房间管理
-- ✅ 心跳检测
-- ✅ 错误处理
-- ✅ 跨运行时兼容
-- ✅ 中间件系统
-- ✅ 命名空间
-- ✅ 消息加密（AES-256-GCM, AES-128-GCM, AES-256-CBC, AES-128-CBC）
-- ✅ 密钥管理（随机生成、密码派生）
-- ✅ 混合加密场景
-- ✅ 分布式适配器（Redis、MongoDB）
-- ✅ 多服务器场景的消息广播和房间管理
-- ✅ logger、debug、t 参数及 i18n 翻译
-- ✅ 优化功能（MessageCache、MessageQueue、BatchHeartbeatManager、fnv1aHash、useMessageQueue、useBatchHeartbeat）
-
-## 已知问题和限制
-
-### 当前限制
-
-1. **大量连接**: 在极端情况下（>10000 连接）可能需要优化
-   - 当前实现已支持分批发送消息（超过 100 个连接时自动分批）
-   - 已使用异步调度避免阻塞事件循环
-   - 详细优化方案请参考 [OPTIMIZATION.md](./OPTIMIZATION.md)
-
-### 已实现的功能
-
-1. **文件上传**: ✅ 已实现自动分片上传功能
-   - 客户端 `uploadFile()` 方法自动分片上传
-   - 服务端自动接收和组装分片
-   - 支持上传进度、完成、错误回调
-   - 支持上传取消
-   - 默认分片大小 64KB，可自定义
-
-### 已解决的问题
-
-1. ✅ **二进制消息处理**: 已完全支持，包括 Deno 和 Bun 环境下的类型兼容
-2. ✅ **加密功能**: 已完全实现，支持所有主流加密算法
-3. ✅ **跨运行时兼容**: 已完全兼容 Deno 和 Bun
-4. ✅ **命名空间**: 已完全实现并测试通过
-5. ✅ **分布式适配器**: 已实现 Redis 和 MongoDB 适配器，支持多服务器场景
-6. ✅ **MongoDB 单节点副本集**: 已支持单节点副本集配置和轮询降级方案
-
-## 结论
-
-@dreamer/websocket 库的测试覆盖全面，所有功能模块都经过了充分测试。测试结果显示：
-
-1. **功能完整性**: ✅ 所有核心功能都已实现并测试通过
-2. **跨运行时兼容性**: ✅ 完全兼容 Deno 和 Bun 运行时
-3. **稳定性**: ✅ 所有测试在两种环境下都稳定通过（156/156）
-4. **性能**: ✅ 连接建立和消息处理性能良好
-5. **加密功能**: ✅ 完整的加密支持，包括多种算法和密钥管理
-6. **分布式支持**: ✅ 支持 Redis 和 MongoDB 分布式适配器，实现多服务器场景
-7. **代码质量**: ✅ 100% 测试覆盖率
-
-该库已准备好用于生产环境。
-
-## 运行测试
+## Test Results
+
+### Summary Statistics
+
+- **Total Tests**: 156
+- **Passed**: 156 ✅
+- **Failed**: 0
+- **Pass Rate**: 100% ✅
+- **Execution Time**:
+  - Deno: ~134 seconds (2m14s)
+  - Bun: ~134 seconds
+
+### Test File Statistics
+
+| Test File | Tests | Deno Status | Bun Status | Description |
+|-----------|-------|-------------|------------|-------------|
+| `adapters-mongodb.test.ts` | 6 | ✅ All Pass | ✅ All Pass | MongoDB distributed adapter |
+| `adapters-redis.test.ts` | 6 | ✅ All Pass | ✅ All Pass | Redis distributed adapter |
+| `connection.test.ts` | 5 | ✅ All Pass | ✅ All Pass | WebSocket connection and message handling |
+| `data-storage.test.ts` | 1 | ✅ All Pass | ✅ All Pass | Socket data storage |
+| `disconnect.test.ts` | 3 | ✅ All Pass | ✅ All Pass | Socket disconnect handling |
+| `encryption.test.ts` | 56 | ✅ All Pass | ✅ All Pass | Message encryption |
+| `error-handling.test.ts` | 2 | ✅ All Pass | ✅ All Pass | Error handling |
+| `heartbeat.test.ts` | 2 | ✅ All Pass | ✅ All Pass | Heartbeat detection |
+| `logger-debug-i18n.test.ts` | 11 | ✅ All Pass | ✅ All Pass | logger, debug, t parameter and i18n |
+| `middleware.test.ts` | 12 | ✅ All Pass | ✅ All Pass | Middleware system |
+| `namespace.test.ts` | 8 | ✅ All Pass | ✅ All Pass | Namespace functionality |
+| `optimization.test.ts` | 21 | ✅ All Pass | ✅ All Pass | Optimization (MessageCache, MessageQueue, etc.) |
+| `room.test.ts` | 7 | ✅ All Pass | ✅ All Pass | Room management |
+| `runtime-compat.test.ts` | 2 | ✅ All Pass | ✅ All Pass | Cross-runtime compatibility |
+| `server.test.ts` | 10 | ✅ All Pass | ✅ All Pass | Server functionality |
+| `socket-events.test.ts` | 4 | ✅ All Pass | ✅ All Pass | Socket event system |
+
+**Total**: 16 test files, 156 test cases, all passed ✅
+
+## Feature Module Test Coverage
+
+### 1. Server Constructor and Configuration
+
+**Test Scenarios**:
+- ✅ Should create server instance
+  - Create Server instance
+  - Verify port configuration
+- ✅ Should use default configuration
+  - Default path is "/"
+  - Default heartbeat timeout is 60000ms
+  - Default heartbeat interval is 30000ms
+- ✅ Should support custom configuration
+  - Custom port, host, path
+  - Custom heartbeat timeout and interval
+  - Custom max connections
+
+**Test Result**: 3 tests all passed
+
+### 2. Server Event Listeners
+
+**Test Scenarios**:
+- ✅ Should support connection event listener
+  - Register connection event listener
+- ✅ Should support multiple connection listeners
+  - Multiple listeners can be registered simultaneously
+
+**Test Result**: 2 tests all passed
+
+### 3. WebSocket Connection and Messages
+
+**Test Scenarios**:
+- ✅ Should accept WebSocket connections
+  - Client can successfully connect to server
+  - Server triggers connection event
+- ✅ Should create handshake info
+  - Handshake info includes query, headers, address, url
+- ✅ Should handle text messages
+  - Server can receive text messages from client
+  - Messages are parsed correctly
+- ✅ Should send messages to client
+  - Server can proactively send messages to client
+  - Client can receive messages correctly
+- ✅ Should handle heartbeat messages
+  - Auto handle ping/pong messages
+
+**Test Result**: 5 tests all passed
+
+### 4. Socket Event System
+
+**Test Scenarios**:
+- ✅ Should support multiple event listeners
+  - Same event can have multiple listeners
+  - All listeners are invoked
+- ✅ Should support removing event listeners
+  - Use `off()` to remove specified listener
+- ✅ Should support removing all event listeners
+  - Use `off()` to remove all listeners
+- ✅ Should support callbacks
+  - Events can pass callback functions
+  - Callbacks can return responses
+
+**Test Result**: 4 tests all passed
+
+### 5. Socket Room Management
+
+**Test Scenarios**:
+- ✅ Should support joining rooms
+  - Use `join()` to join room
+- ✅ Should support leaving rooms
+  - Use `leave()` to leave room
+- ✅ Should emit to room
+  - Use `to(room).emit()` to send to room
+  - Other room members receive messages
+- ✅ Should support broadcast
+  - Use `broadcast.emit()` to broadcast to all other connections
+- ✅ Should support batch join rooms
+  - Use `join()` to join multiple rooms at once
+- ✅ Should support batch leave rooms
+  - Use `leave()` to leave multiple rooms at once
+- ✅ Should support batch emit to rooms
+  - Use `batchEmitToRooms()` to emit to multiple rooms at once
+
+**Test Result**: 7 tests all passed
+
+### 6. Socket Disconnect
+
+**Test Scenarios**:
+- ✅ Should handle client disconnect
+  - Disconnect event triggered when client disconnects
+- ✅ Should support server-initiated disconnect
+  - Server calls `disconnect()` to close connection
+  - Client receives close event
+- ✅ Should clean up room members
+  - Automatically remove from all rooms on disconnect
+
+**Test Result**: 3 tests all passed
+
+### 7. Socket Data Storage
+
+**Test Scenarios**:
+- ✅ Should support data storage
+  - Use `data` property to store custom data
+  - Data persists for connection lifetime
+
+**Test Result**: 1 test all passed
+
+### 8. Error Handling
+
+**Test Scenarios**:
+- ✅ Should handle invalid path requests
+  - Return 404 for invalid paths
+- ✅ Should handle invalid JSON messages
+  - Trigger error event on invalid JSON
+  - Connection does not close on error
+
+**Test Result**: 2 tests all passed
+
+### 9. Heartbeat Detection
+
+**Test Scenarios**:
+- ✅ Should send heartbeat messages
+  - Server sends heartbeat at configured interval
+  - Disconnect on heartbeat timeout
+- ✅ Should handle heartbeat response
+  - Reset timeout timer when client responds to heartbeat
+
+**Test Result**: 2 tests all passed
+
+### 10. Middleware System
+
+**Test Scenarios**:
+- ✅ Should support adding middleware
+  - Use `use()` to add middleware
+- ✅ Should support async middleware
+  - Async middleware functions supported
+- ✅ Should support middleware error handling
+  - Middleware can call `next(error)` to pass errors
+- ✅ Should support auth middleware (pass)
+  - Use `authMiddleware` for authentication
+- ✅ Should support auth middleware (reject)
+  - Reject connection on auth failure
+- ✅ Should support async auth middleware
+  - Async auth logic supported
+- ✅ Should support logger middleware
+  - Use `loggerMiddleware` to log connections
+- ✅ Should support connection limit
+  - Use `rateLimitMiddleware` to limit connections
+- ✅ Should support message rate limit
+  - Use `rateLimitMiddleware` to limit message frequency
+- ✅ Should support CORS middleware (allow)
+  - Use `corsMiddleware` to allow specific origins
+- ✅ Should support CORS middleware (function validation)
+  - Use function for dynamic origin validation
+- ✅ Should support CORS middleware (array validation)
+  - Use array to configure multiple allowed origins
+
+**Test Result**: 12 tests all passed
+
+### 11. Namespace Functionality
+
+**Test Scenarios**:
+- ✅ Should support creating namespaces
+  - Use `of()` to create namespace
+- ✅ Should support namespace name validation
+  - Namespace name must start with "/"
+- ✅ Should support namespace connection
+  - Client can connect to specific namespace
+- ✅ Should support namespace middleware
+  - Namespace can have its own middleware
+- ✅ Should support multiple namespaces
+  - Multiple namespaces can be created
+- ✅ Should support getting all namespaces
+  - Use `getAll()` to get all namespaces
+- ✅ Should support repeated get of same namespace
+  - Repeated `of()` returns same instance
+- ✅ Should support namespace isolation
+  - Messages in different namespaces do not interfere
+
+**Test Result**: 8 tests all passed
+
+### 12. Message Encryption
+
+**Test Scenarios**:
+
+#### EncryptionManager Constructor
+- ✅ Should create instance with Uint8Array key
+- ✅ Should create instance with string key
+- ✅ Should auto-select algorithm by key length (32 bytes -> AES-256)
+- ✅ Should auto-select algorithm by key length (16 bytes -> AES-128)
+- ✅ Should support specifying algorithm
+- ✅ Should support all algorithm types
+- ✅ Should reject invalid key length
+- ✅ Should reject algorithm/key length mismatch
+- ✅ Should support disabling encryption
+
+#### EncryptionManager Encrypt and Decrypt
+- ✅ Should encrypt and decrypt messages
+- ✅ Should encrypt and decrypt complex JSON data
+- ✅ Should support AES-256-GCM algorithm
+- ✅ Should support AES-128-GCM algorithm
+- ✅ Should support AES-256-CBC algorithm
+- ✅ Should support AES-128-CBC algorithm
+- ✅ Should reject decrypt with wrong key
+- ✅ Should reject decrypt invalid encrypted data
+- ✅ Should return raw message when encryption disabled
+
+#### EncryptionManager isEncrypted Method
+- ✅ Should correctly identify encrypted messages
+- ✅ Should correctly identify JSON messages
+
+#### EncryptionManager Static Methods
+- ✅ Should generate random key (AES-256)
+- ✅ Should generate random key (AES-128)
+- ✅ Should derive key from password (AES-256)
+- ✅ Should derive key from password (AES-128)
+- ✅ Same password should derive same key
+- ✅ Different passwords should derive different keys
+
+#### WebSocket Encryption - Server
+- ✅ Should receive and auto-decrypt encrypted messages from client
+- ✅ Should handle multiple encrypted messages
+- ✅ Should send auto-encrypted messages to client
+
+#### WebSocket Encryption - Client
+- ✅ Should send auto-encrypted messages to server
+- ✅ Should receive and auto-decrypt encrypted messages from server
+
+#### WebSocket Encryption - End-to-End
+- ✅ Should support bidirectional encrypted communication
+- ✅ Should support callbacks with encryption
+- ✅ Should support aes-256-gcm end-to-end encryption
+- ✅ Should support aes-128-gcm end-to-end encryption
+- ✅ Should support aes-256-cbc end-to-end encryption
+- ✅ Should support aes-128-cbc end-to-end encryption
+- ✅ Should reject clients with different keys
+- ✅ Should support string keys
+- ✅ Should support password-derived keys
+
+#### WebSocket Encryption - Mixed Scenarios
+- ✅ Should support unencrypted server with encrypted client
+- ✅ Should support encrypted server with unencrypted client
+
+#### WebSocket Encryption - Performance
+- ✅ Should handle large volume of encrypted messages
+
+#### WebSocket Encryption - Edge Cases
+- ✅ Should encrypt and decrypt empty string
+- ✅ Should encrypt and decrypt strings with Unicode
+- ✅ Should encrypt and decrypt very long strings
+- ✅ Should encrypt and decrypt JSON with special characters
+- ✅ Should handle empty string correctly (isEncrypted)
+- ✅ Should correctly identify short Base64 string (not encrypted)
+- ✅ Should correctly identify non-Base64 string
+- ✅ Should correctly identify valid Base64 but non-encrypted message
+- ✅ Should handle decrypt failure (key mismatch)
+- ✅ Should handle invalid encrypted message format
+- ✅ Should handle encryption errors
+- ✅ Binary messages should not be encrypted (client)
+- ✅ Binary messages should not be encrypted (server)
+
+**Test Result**: 56 tests all passed
+
+### 13. Cross-Runtime Compatibility
+
+**Test Scenarios**:
+- ✅ Should work in Deno environment
+  - Detect Deno runtime
+- ✅ Should work in Bun environment
+  - Detect Bun runtime
+
+**Test Result**: 2 tests all passed
+
+### 14. Distributed Adapter - Redis
+
+**Test Scenarios**:
+- ✅ Should init and close adapter
+  - Redis adapter can init and close
+  - Connects to Redis server correctly
+- ✅ Should support adding and removing Socket from rooms
+  - Can add Socket to room
+  - Can remove Socket from room
+  - Can query Socket list in room
+- ✅ Should support server registration and unregistration
+  - Server can register to Redis
+  - Server can unregister
+  - Can query all server IDs
+- ✅ Should support message broadcast and subscription (multi-server)
+  - Multiple server instances can communicate
+  - Messages can broadcast across servers
+  - Subscription mechanism works
+- ✅ Should support room broadcast (multi-server)
+  - Room messages can broadcast across servers
+  - All Sockets in room receive messages
+- ✅ Should support room management in multi-server scenario
+  - Multiple servers can manage same room
+  - Room member info syncs correctly
+
+**Test Result**: 6 tests all passed
+
+### 15. Distributed Adapter - MongoDB
+
+**Test Scenarios**:
+- ✅ Should init and close adapter
+  - MongoDB adapter can init and close
+  - Connects to MongoDB correctly
+  - Supports single-node replica set config
+- ✅ Should support adding and removing Socket from rooms
+  - Can add Socket to room
+  - Can remove Socket from room
+  - Can query Socket list in room
+- ✅ Should support server registration and unregistration
+  - Server can register to MongoDB
+  - Server can unregister
+  - Can query all server IDs
+- ✅ Should support message broadcast and subscription (multi-server)
+  - Multiple server instances can communicate
+  - Supports Change Streams (replica set mode)
+  - Supports polling fallback (single-node mode)
+  - Messages can broadcast across servers
+- ✅ Should support room broadcast (multi-server)
+  - Room messages can broadcast across servers
+  - All Sockets in room receive messages
+- ✅ Should support room management in multi-server scenario
+  - Multiple servers can manage same room
+  - Room member info syncs correctly
+
+**Test Result**: 6 tests all passed
+
+### 16. logger, debug, t Parameters
+
+**Test Scenarios**:
+- ✅ Should use provided custom logger
+- ✅ Should use default logger when not provided
+- ✅ Should call logger.debug on request when debug=true
+- ✅ Should not call logger.debug when debug=false
+- ✅ Should use translated result for debug logs when t function provided
+- ✅ server.tr should use t function return value
+- ✅ Should use fallback when t returns key or undefined
+- ✅ loggerMiddleware should use custom logger for connection logs
+- ✅ loggerMiddleware should use server.tr for translation
+- ✅ MongoDBAdapter should support t parameter for error message translation
+- ✅ authMiddleware should use server.tr for error message on auth failure
+
+**Test Result**: 11 tests all passed
+
+### 17. Optimization (MessageCache, MessageQueue, BatchHeartbeatManager, etc.)
+
+**Test Scenarios**:
+
+#### fnv1aHash Fast Hash
+- ✅ Same input should produce same hash
+- ✅ Different inputs should produce different hashes
+- ✅ Should return hex string
+
+#### MessageCache Message Serialization Cache
+- ✅ Same message should hit cache and return same serialized result
+- ✅ getStats should return correct stats
+- ✅ Should evict LRU when exceeding maxSize
+- ✅ clear should empty cache
+
+#### MessageQueue
+- ✅ enqueue should succeed and getStats should return valid value
+- ✅ getStats should return correct stats
+- ✅ clear should empty queue
+- ✅ onError should be called on send failure
+
+#### BatchHeartbeatManager
+- ✅ add should increase managed Socket count
+- ✅ remove should decrease managed Socket count
+- ✅ handlePong should update last heartbeat time (no throw)
+- ✅ clear should clear all Sockets
+
+#### Server getStats
+- ✅ Should include messageQueue and messageCache stats
+- ✅ Should not include messageCache stats when disabled
+- ✅ Should not include messageQueue stats when disabled
+
+#### useMessageQueue Broadcast via Queue
+- ✅ broadcast should go through queue when useMessageQueue=true
+- ✅ emitToRoom should go through queue when useMessageQueue=true
+
+#### useBatchHeartbeat
+- ✅ Should send/receive heartbeat normally when useBatchHeartbeat=true
+
+**Test Result**: 21 tests all passed
+
+## Cross-Runtime Compatibility Tests
+
+### Deno Environment
+
+- **Tests**: 156
+- **Passed**: 156 ✅
+- **Failed**: 0
+- **Execution Time**: ~134 seconds (2m14s)
+
+### Bun Environment
+
+- **Tests**: 156
+- **Passed**: 156 ✅
+- **Failed**: 0
+- **Execution Time**: ~134 seconds (2m14s)
+
+**Compatibility Conclusion**: ✅ Fully compatible with Deno and Bun runtimes
+
+## Performance Tests
+
+### Connection Establishment
+
+- **Single connection**: < 1 second
+- **Concurrent connections**: Supports concurrent connection establishment
+
+### Message Processing
+
+- **Send latency**: < 100ms
+- **Receive latency**: < 100ms
+- **Room broadcast latency**: < 500ms (4 connections)
+- **Encrypted message handling**: < 1.5 seconds (including encrypt/decrypt)
+
+### Heartbeat
+
+- **Heartbeat interval**: Configurable (default 30 seconds)
+- **Heartbeat timeout**: Configurable (default 60 seconds)
+
+### Encryption Performance
+
+- **Single message encrypt**: < 5ms
+- **Single message decrypt**: < 5ms
+- **Bulk messages**: 100 messages < 1 second
+
+## Test Coverage Analysis
+
+### Code Coverage
+
+- **Server class**: 100% ✅
+- **Socket class**: 100% ✅
+- **EncryptionManager class**: 100% ✅
+- **Event system**: 100% ✅
+- **Room management**: 100% ✅
+- **Heartbeat**: 100% ✅
+- **Error handling**: 100% ✅
+- **Middleware system**: 100% ✅
+- **Namespaces**: 100% ✅
+
+### Feature Coverage
+
+- ✅ Server start and shutdown
+- ✅ Connection management
+- ✅ Message send/receive (text, binary)
+- ✅ Event system
+- ✅ Room management
+- ✅ Heartbeat detection
+- ✅ Error handling
+- ✅ Cross-runtime compatibility
+- ✅ Middleware system
+- ✅ Namespaces
+- ✅ Message encryption (AES-256-GCM, AES-128-GCM, AES-256-CBC, AES-128-CBC)
+- ✅ Key management (random generation, password derivation)
+- ✅ Mixed encryption scenarios
+- ✅ Distributed adapters (Redis, MongoDB)
+- ✅ Multi-server message broadcast and room management
+- ✅ logger, debug, t parameters and i18n translation
+- ✅ Optimization (MessageCache, MessageQueue, BatchHeartbeatManager, fnv1aHash, useMessageQueue, useBatchHeartbeat)
+
+## Known Issues and Limitations
+
+### Current Limitations
+
+1. **High connection count**: May need optimization in extreme cases (>10000 connections)
+   - Current implementation supports batched sends (auto batch when >100 connections)
+   - Async scheduling used to avoid blocking event loop
+   - See [OPTIMIZATION.md](./OPTIMIZATION.md) for details
+
+### Implemented Features
+
+1. **File upload**: ✅ Auto chunked upload implemented
+   - Client `uploadFile()` auto chunks
+   - Server auto receives and assembles chunks
+   - Supports progress, complete, error callbacks
+   - Supports upload cancel
+   - Default chunk size 64KB, configurable
+
+### Resolved Issues
+
+1. ✅ **Binary message handling**: Fully supported, including type compatibility in Deno and Bun
+2. ✅ **Encryption**: Fully implemented, all major algorithms supported
+3. ✅ **Cross-runtime compatibility**: Fully compatible with Deno and Bun
+4. ✅ **Namespaces**: Fully implemented and tested
+5. ✅ **Distributed adapters**: Redis and MongoDB adapters implemented, multi-server supported
+6. ✅ **MongoDB single-node replica set**: Single-node replica set and polling fallback supported
+
+## Conclusion
+
+@dreamer/websocket has comprehensive test coverage. All feature modules are thoroughly tested. Results show:
+
+1. **Feature completeness**: ✅ All core features implemented and tested
+2. **Cross-runtime compatibility**: ✅ Fully compatible with Deno and Bun
+3. **Stability**: ✅ All tests pass in both environments (156/156)
+4. **Performance**: ✅ Good connection and message handling performance
+5. **Encryption**: ✅ Full encryption support, multiple algorithms and key management
+6. **Distributed support**: ✅ Redis and MongoDB adapters for multi-server scenarios
+7. **Code quality**: ✅ 100% test coverage
+
+The library is ready for production use.
+
+## Running Tests
 
 ### Deno
 
@@ -563,27 +563,27 @@ deno test -A
 bun test
 ```
 
-## 测试文件列表
+## Test File List
 
-1. `tests/adapters-mongodb.test.ts` - MongoDB 分布式适配器测试
-2. `tests/adapters-redis.test.ts` - Redis 分布式适配器测试
-3. `tests/connection.test.ts` - WebSocket 连接和消息处理测试
-4. `tests/data-storage.test.ts` - Socket 数据存储测试
-5. `tests/disconnect.test.ts` - Socket 断开连接测试
-6. `tests/encryption.test.ts` - 消息加密功能测试
-7. `tests/error-handling.test.ts` - 错误处理测试
-8. `tests/heartbeat.test.ts` - 心跳检测测试
-9. `tests/logger-debug-i18n.test.ts` - logger、debug、t 参数及 i18n 测试
-10. `tests/middleware.test.ts` - 中间件系统测试
-11. `tests/namespace.test.ts` - 命名空间功能测试
-12. `tests/optimization.test.ts` - 优化功能测试（MessageCache、MessageQueue 等）
-13. `tests/room.test.ts` - 房间管理测试
-14. `tests/runtime-compat.test.ts` - 跨运行时兼容性测试
-15. `tests/server.test.ts` - 服务器功能测试
-16. `tests/socket-events.test.ts` - Socket 事件系统测试
+1. `tests/adapters-mongodb.test.ts` - MongoDB distributed adapter tests
+2. `tests/adapters-redis.test.ts` - Redis distributed adapter tests
+3. `tests/connection.test.ts` - WebSocket connection and message handling tests
+4. `tests/data-storage.test.ts` - Socket data storage tests
+5. `tests/disconnect.test.ts` - Socket disconnect tests
+6. `tests/encryption.test.ts` - Message encryption tests
+7. `tests/error-handling.test.ts` - Error handling tests
+8. `tests/heartbeat.test.ts` - Heartbeat detection tests
+9. `tests/logger-debug-i18n.test.ts` - logger, debug, t parameter and i18n tests
+10. `tests/middleware.test.ts` - Middleware system tests
+11. `tests/namespace.test.ts` - Namespace functionality tests
+12. `tests/optimization.test.ts` - Optimization tests (MessageCache, MessageQueue, etc.)
+13. `tests/room.test.ts` - Room management tests
+14. `tests/runtime-compat.test.ts` - Cross-runtime compatibility tests
+15. `tests/server.test.ts` - Server functionality tests
+16. `tests/socket-events.test.ts` - Socket event system tests
 
 ---
 
-**测试报告生成时间**: 2026-02-06
-**测试框架**: @dreamer/test
-**测试状态**: ✅ 全部通过 (156/156)
+**Report Generated**: 2026-02-06
+**Test Framework**: @dreamer/test
+**Test Status**: ✅ All Passed (156/156)
