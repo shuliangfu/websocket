@@ -64,7 +64,10 @@ export {
   MessageCache,
   setGlobalMessageCache,
 } from "./message-cache.ts";
-export { MessageQueue } from "./message-queue.ts";
+export {
+  MessageQueue,
+  type MessageQueueErrorHandler,
+} from "./message-queue.ts";
 export { Namespace, NamespaceManager } from "./namespace.ts";
 export { RoomManager } from "./room.ts";
 

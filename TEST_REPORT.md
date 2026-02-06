@@ -2,9 +2,9 @@
 
 ## 测试概览
 
-- **测试库版本**: @dreamer/test@^1.0.0-beta.12
+- **测试库版本**: @dreamer/test@^1.0.0-beta.40
 - **测试框架**: @dreamer/test (兼容 Deno 和 Bun)
-- **测试时间**: 2026-01-12
+- **测试时间**: 2026-02-06
 - **测试环境**:
   - **Deno**: 2.6.4
   - **Bun**: 1.3.5
@@ -13,34 +13,36 @@
 
 ### 总体统计
 
-- **总测试数**: 123
-- **通过**: 123 ✅
+- **总测试数**: 156
+- **通过**: 156 ✅
 - **失败**: 0
 - **通过率**: 100% ✅
 - **测试执行时间**:
-  - Deno: ~110 秒
-  - Bun: ~110 秒
+  - Deno: ~134 秒 (2m14s)
+  - Bun: ~134 秒
 
 ### 测试文件统计
 
 | 测试文件 | 测试数 | Deno 状态 | Bun 状态 | 说明 |
 |---------|--------|----------|----------|------|
+| `adapters-mongodb.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | MongoDB 分布式适配器 |
+| `adapters-redis.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | Redis 分布式适配器 |
 | `connection.test.ts` | 5 | ✅ 全部通过 | ✅ 全部通过 | WebSocket 连接和消息处理 |
 | `data-storage.test.ts` | 1 | ✅ 全部通过 | ✅ 全部通过 | Socket 数据存储 |
 | `disconnect.test.ts` | 3 | ✅ 全部通过 | ✅ 全部通过 | Socket 断开连接处理 |
 | `encryption.test.ts` | 56 | ✅ 全部通过 | ✅ 全部通过 | 消息加密功能 |
 | `error-handling.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 错误处理 |
 | `heartbeat.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 心跳检测 |
+| `logger-debug-i18n.test.ts` | 11 | ✅ 全部通过 | ✅ 全部通过 | logger、debug、t 参数及 i18n |
 | `middleware.test.ts` | 12 | ✅ 全部通过 | ✅ 全部通过 | 中间件系统 |
 | `namespace.test.ts` | 8 | ✅ 全部通过 | ✅ 全部通过 | 命名空间功能 |
+| `optimization.test.ts` | 21 | ✅ 全部通过 | ✅ 全部通过 | 优化功能（MessageCache、MessageQueue 等） |
 | `room.test.ts` | 7 | ✅ 全部通过 | ✅ 全部通过 | 房间管理 |
 | `runtime-compat.test.ts` | 2 | ✅ 全部通过 | ✅ 全部通过 | 跨运行时兼容性 |
-| `server.test.ts` | 9 | ✅ 全部通过 | ✅ 全部通过 | 服务器功能 |
+| `server.test.ts` | 10 | ✅ 全部通过 | ✅ 全部通过 | 服务器功能 |
 | `socket-events.test.ts` | 4 | ✅ 全部通过 | ✅ 全部通过 | Socket 事件系统 |
-| `adapters-redis.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | Redis 分布式适配器 |
-| `adapters-mongodb.test.ts` | 6 | ✅ 全部通过 | ✅ 全部通过 | MongoDB 分布式适配器 |
 
-**总计**: 14 个测试文件，123 个测试用例，全部通过 ✅
+**总计**: 16 个测试文件，156 个测试用例，全部通过 ✅
 
 ## 功能模块测试覆盖
 
@@ -371,21 +373,79 @@
 
 **测试结果**: 6 个测试全部通过
 
+### 16. logger、debug、t 参数
+
+**测试场景**:
+- ✅ 应该使用传入的自定义 logger
+- ✅ 未传入 logger 时应使用默认 logger
+- ✅ debug=true 时应在收到请求时调用 logger.debug
+- ✅ debug=false 时不应调用 logger.debug
+- ✅ 传入 t 函数时 debug 日志应使用翻译结果
+- ✅ server.tr 应使用 t 函数的返回值
+- ✅ t 返回 key 或 undefined 时应使用 fallback
+- ✅ loggerMiddleware 应使用传入的自定义 logger 记录连接日志
+- ✅ loggerMiddleware 应使用 server.tr 进行翻译
+- ✅ MongoDBAdapter 应支持 t 参数进行错误信息翻译
+- ✅ 认证失败时 authMiddleware 应使用 server.tr 翻译错误信息
+
+**测试结果**: 11 个测试全部通过
+
+### 17. 优化功能（MessageCache、MessageQueue、BatchHeartbeatManager 等）
+
+**测试场景**:
+
+#### fnv1aHash 快速哈希
+- ✅ 相同输入应产生相同哈希
+- ✅ 不同输入应产生不同哈希
+- ✅ 应返回十六进制字符串
+
+#### MessageCache 消息序列化缓存
+- ✅ 相同消息应命中缓存返回相同序列化结果
+- ✅ getStats 应返回正确统计
+- ✅ 超过 maxSize 时应驱逐最久未使用项（LRU）
+- ✅ clear 应清空缓存
+
+#### MessageQueue 消息队列
+- ✅ enqueue 应成功入队且 getStats 返回有效值
+- ✅ getStats 应返回正确统计
+- ✅ clear 应清空队列
+- ✅ onError 应在发送失败时被调用
+
+#### BatchHeartbeatManager 批量心跳管理器
+- ✅ add 应增加管理的 Socket 数量
+- ✅ remove 应减少管理的 Socket 数量
+- ✅ handlePong 应更新最后心跳时间（不抛错）
+- ✅ clear 应清空所有 Socket
+
+#### Server getStats 统计信息
+- ✅ 应包含 messageQueue 和 messageCache 统计
+- ✅ 禁用 messageCache 时不应包含 messageCache 统计
+- ✅ 禁用 messageQueue 时不应包含 messageQueue 统计
+
+#### useMessageQueue 广播通过消息队列
+- ✅ useMessageQueue=true 时 broadcast 应通过队列发送
+- ✅ useMessageQueue=true 时 emitToRoom 应通过队列发送
+
+#### useBatchHeartbeat 批量心跳
+- ✅ useBatchHeartbeat=true 时应能正常收发心跳
+
+**测试结果**: 21 个测试全部通过
+
 ## 跨运行时兼容性测试
 
 ### Deno 环境测试
 
-- **测试数**: 123
-- **通过**: 123 ✅
+- **测试数**: 156
+- **通过**: 156 ✅
 - **失败**: 0
-- **执行时间**: ~110 秒
+- **执行时间**: ~134 秒 (2m14s)
 
 ### Bun 环境测试
 
-- **测试数**: 123
-- **通过**: 123 ✅
+- **测试数**: 156
+- **通过**: 156 ✅
 - **失败**: 0
-- **执行时间**: ~110 秒
+- **执行时间**: ~134 秒 (2m14s)
 
 **兼容性结论**: ✅ 完全兼容 Deno 和 Bun 运行时
 
@@ -445,6 +505,8 @@
 - ✅ 混合加密场景
 - ✅ 分布式适配器（Redis、MongoDB）
 - ✅ 多服务器场景的消息广播和房间管理
+- ✅ logger、debug、t 参数及 i18n 翻译
+- ✅ 优化功能（MessageCache、MessageQueue、BatchHeartbeatManager、fnv1aHash、useMessageQueue、useBatchHeartbeat）
 
 ## 已知问题和限制
 
@@ -479,7 +541,7 @@
 
 1. **功能完整性**: ✅ 所有核心功能都已实现并测试通过
 2. **跨运行时兼容性**: ✅ 完全兼容 Deno 和 Bun 运行时
-3. **稳定性**: ✅ 所有测试在两种环境下都稳定通过（123/123）
+3. **稳定性**: ✅ 所有测试在两种环境下都稳定通过（156/156）
 4. **性能**: ✅ 连接建立和消息处理性能良好
 5. **加密功能**: ✅ 完整的加密支持，包括多种算法和密钥管理
 6. **分布式支持**: ✅ 支持 Redis 和 MongoDB 分布式适配器，实现多服务器场景
@@ -503,23 +565,25 @@ bun test
 
 ## 测试文件列表
 
-1. `tests/connection.test.ts` - WebSocket 连接和消息处理测试
-2. `tests/data-storage.test.ts` - Socket 数据存储测试
-3. `tests/disconnect.test.ts` - Socket 断开连接测试
-4. `tests/encryption.test.ts` - 消息加密功能测试
-5. `tests/error-handling.test.ts` - 错误处理测试
-6. `tests/heartbeat.test.ts` - 心跳检测测试
-7. `tests/middleware.test.ts` - 中间件系统测试
-8. `tests/namespace.test.ts` - 命名空间功能测试
-9. `tests/room.test.ts` - 房间管理测试
-10. `tests/runtime-compat.test.ts` - 跨运行时兼容性测试
-11. `tests/server.test.ts` - 服务器功能测试
-12. `tests/socket-events.test.ts` - Socket 事件系统测试
-13. `tests/adapters-redis.test.ts` - Redis 分布式适配器测试
-14. `tests/adapters-mongodb.test.ts` - MongoDB 分布式适配器测试
+1. `tests/adapters-mongodb.test.ts` - MongoDB 分布式适配器测试
+2. `tests/adapters-redis.test.ts` - Redis 分布式适配器测试
+3. `tests/connection.test.ts` - WebSocket 连接和消息处理测试
+4. `tests/data-storage.test.ts` - Socket 数据存储测试
+5. `tests/disconnect.test.ts` - Socket 断开连接测试
+6. `tests/encryption.test.ts` - 消息加密功能测试
+7. `tests/error-handling.test.ts` - 错误处理测试
+8. `tests/heartbeat.test.ts` - 心跳检测测试
+9. `tests/logger-debug-i18n.test.ts` - logger、debug、t 参数及 i18n 测试
+10. `tests/middleware.test.ts` - 中间件系统测试
+11. `tests/namespace.test.ts` - 命名空间功能测试
+12. `tests/optimization.test.ts` - 优化功能测试（MessageCache、MessageQueue 等）
+13. `tests/room.test.ts` - 房间管理测试
+14. `tests/runtime-compat.test.ts` - 跨运行时兼容性测试
+15. `tests/server.test.ts` - 服务器功能测试
+16. `tests/socket-events.test.ts` - Socket 事件系统测试
 
 ---
 
-**测试报告生成时间**: 2026-01-12
+**测试报告生成时间**: 2026-02-06
 **测试框架**: @dreamer/test
-**测试状态**: ✅ 全部通过 (123/123)
+**测试状态**: ✅ 全部通过 (156/156)

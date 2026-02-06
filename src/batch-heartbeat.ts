@@ -113,7 +113,7 @@ export class BatchHeartbeatManager {
       }
 
       // 发送心跳（异步，不等待）
-      (socket as any).sendMessage({ type: "ping" }).catch(() => {
+      socket.sendMessage({ type: "ping" }).catch(() => {
         // 忽略发送失败的错误
       });
 

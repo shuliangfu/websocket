@@ -5,6 +5,7 @@
 
 import type { EncryptionManager } from "./encryption.ts";
 import type { WebSocketMessage } from "./types.ts";
+import { fnv1aHash } from "./hash.ts";
 import { serializeMessage } from "./message.ts";
 
 /**
@@ -45,6 +46,7 @@ export class MessageCache {
 
   /**
    * 计算消息哈希
+   * 使用 FNV-1a 快速哈希，比 JSON.stringify 更高效
    * @param message 消息对象
    * @param encryptionManager 加密管理器（用于区分加密/未加密）
    * @returns 消息哈希
@@ -53,10 +55,9 @@ export class MessageCache {
     message: WebSocketMessage,
     encryptionManager?: EncryptionManager,
   ): string {
-    // 使用 JSON.stringify 生成哈希（简单但有效）
-    // 对于加密消息，需要包含加密管理器的标识
     const encryptionKey = encryptionManager ? "encrypted" : "plain";
-    return `${encryptionKey}:${JSON.stringify(message)}`;
+    const str = `${encryptionKey}:${JSON.stringify(message)}`;
+    return fnv1aHash(str);
   }
 
   /**
@@ -77,6 +78,9 @@ export class MessageCache {
       // 检查是否过期
       if (Date.now() - cached.timestamp < this.ttl) {
         cached.useCount++;
+        // LRU：访问后移到末尾（删除并重新插入，Map 保持插入顺序）
+        this.cache.delete(hash);
+        this.cache.set(hash, cached);
         return cached.serialized;
       } else {
         // 过期，删除
@@ -88,12 +92,12 @@ export class MessageCache {
     // 缓存未命中，序列化消息
     const serialized = await serializeMessage(message, encryptionManager);
 
-    // 如果缓存已满，删除最少使用的项
+    // 如果缓存已满，驱逐最久未使用的项（LRU，Map 首项为最久未使用，O(1)）
     if (this.currentSize >= this.maxSize) {
-      this.evictLeastUsed();
+      this.evictLRU();
     }
 
-    // 添加到缓存
+    // 添加到缓存（新项在末尾）
     this.cache.set(hash, {
       serialized,
       timestamp: Date.now(),
@@ -105,19 +109,13 @@ export class MessageCache {
   }
 
   /**
-   * 删除最少使用的缓存项
+   * 驱逐最久未使用的缓存项（LRU，O(1)）
+   * 利用 Map 的插入顺序，首项为最久未访问
    */
-  private evictLeastUsed(): void {
-    let leastUsed: { hash: string; useCount: number } | null = null;
-
-    for (const [hash, cached] of this.cache.entries()) {
-      if (!leastUsed || cached.useCount < leastUsed.useCount) {
-        leastUsed = { hash, useCount: cached.useCount };
-      }
-    }
-
-    if (leastUsed) {
-      this.cache.delete(leastUsed.hash);
+  private evictLRU(): void {
+    const firstKey = this.cache.keys().next().value;
+    if (firstKey !== undefined) {
+      this.cache.delete(firstKey);
       this.currentSize--;
     }
   }

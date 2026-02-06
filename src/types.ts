@@ -39,10 +39,50 @@ export interface ServerOptions {
   logger?: import("@dreamer/logger").Logger;
   /** 是否启用调试日志（默认：false），开启后通过 logger.debug 输出 WebSocket 请求路径、握手等调试信息 */
   debug?: boolean;
+  /**
+   * 翻译函数（可选，用于 i18n）
+   * 传入时，debug 日志将使用 t(key, params) 获取翻译；未传入时使用默认中文
+   */
+  t?: (
+    key: string,
+    params?: Record<string, string | number | boolean>,
+  ) => string | undefined;
   /** 加密配置（可选，启用后服务端会自动解密消息） */
   encryption?: EncryptionConfig;
   /** 分布式适配器（可选，用于多服务器实例） */
   adapter?: import("./adapters/types.ts").WebSocketAdapter;
+  /**
+   * 消息缓存配置（可选，用于优化大量连接场景的序列化性能）
+   * 设为 false 可禁用
+   */
+  messageCache?: {
+    /** 最大缓存条数（默认：1000） */
+    maxSize?: number;
+    /** 缓存过期时间（毫秒，默认：60000） */
+    ttl?: number;
+  } | false;
+  /**
+   * 消息队列配置（可选，用于缓冲和批量处理消息）
+   * 设为 false 可禁用
+   */
+  messageQueue?: {
+    /** 最大队列大小（默认：10000） */
+    maxSize?: number;
+    /** 批次大小（默认：100） */
+    batchSize?: number;
+    /** 处理间隔（毫秒，默认：10） */
+    processInterval?: number;
+  } | false;
+  /**
+   * 是否使用批量心跳管理器（默认：false）
+   * 为 true 时使用 BatchHeartbeatManager，减少定时器数量，适合大量连接场景
+   */
+  useBatchHeartbeat?: boolean;
+  /**
+   * 是否通过消息队列发送广播（默认：false）
+   * 为 true 时 broadcast、emitToRoom 先入队，由 MessageQueue 批量发送，提供背压能力
+   */
+  useMessageQueue?: boolean;
 }
 
 /**

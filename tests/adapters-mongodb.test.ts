@@ -3,22 +3,38 @@
  * 测试 MongoDB 分布式适配器的功能（使用真实的 Docker MongoDB 容器）
  */
 
+import { getEnv } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
 import { Server } from "../src/mod.ts";
 import type { ServerOptions } from "../src/types.ts";
 import { delay, getAvailablePort } from "./test-utils.ts";
 
-// MongoDB 连接配置（使用 Docker 中的 MongoDB）
-// 如果 MongoDB 配置为单节点副本集，需要添加 replicaSet 参数
-// 例如：replicaSet: "rs0"
+/** 获取环境变量，带默认值 */
+function getEnvWithDefault(key: string, defaultValue: string): string {
+  return getEnv(key) || defaultValue;
+}
+
+/**
+ * MongoDB 连接配置（使用 Docker 中的 MongoDB）
+ * 支持认证，默认账户 root/8866231（可通过 MONGODB_USER、MONGODB_PASSWORD 覆盖）
+ * 设置 MONGODB_USER="" 可禁用认证（用于无认证环境）
+ */
+const mongoUser = getEnvWithDefault("MONGODB_USER", "root");
+const mongoPassword = getEnvWithDefault("MONGODB_PASSWORD", "8866231");
 const MONGODB_CONFIG = {
-  host: "127.0.0.1",
-  port: 27017,
-  database: "websocket_test",
-  // 如果使用单节点副本集，取消下面的注释并设置正确的副本集名称
+  host: getEnvWithDefault("MONGODB_HOST", "127.0.0.1"),
+  port: parseInt(getEnvWithDefault("MONGODB_PORT", "27017")),
+  database: getEnvWithDefault("MONGODB_DATABASE", "websocket_test"),
   replicaSet: "rs0",
   directConnection: true,
+  ...(mongoUser && mongoPassword
+    ? {
+        username: mongoUser,
+        password: mongoPassword,
+        authSource: getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin"),
+      }
+    : {}),
 };
 
 describe("MongoDB 适配器 - 真实场景测试", () => {

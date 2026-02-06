@@ -4,7 +4,7 @@
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Tests](https://img.shields.io/badge/tests-123%20passed-brightgreen)](./TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-156%20passed-brightgreen)](./TEST_REPORT.md)
 
 ---
 
@@ -38,6 +38,7 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
   - 自动心跳发送
   - 连接超时检测
   - 断线重连支持
+  - 可选批量心跳（`useBatchHeartbeat`），减少定时器数量
 - **中间件系统**：
   - 使用通用中间件系统
   - WebSocket 专用中间件适配器
@@ -61,6 +62,14 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
   - 支持单节点副本集配置
   - 多服务器场景的消息广播和房间管理
   - 自动服务器注册和发现
+- **日志与 i18n**：
+  - 支持自定义 `logger`、`debug`、`t` 翻译函数
+  - 与 @dreamer/server 一致的 debug 日志行为
+- **性能优化**：
+  - `MessageCache`：消息序列化缓存，FNV-1a 快速哈希
+  - `MessageQueue`：广播入队（`useMessageQueue`），提供背压能力
+  - `BatchHeartbeatManager`：批量心跳（`useBatchHeartbeat`），减少定时器
+  - `getStats` 返回 messageQueue、messageCache 统计
 
 ---
 
@@ -330,6 +339,8 @@ const io = new Server({
   // 心跳配置
   pingTimeout: 60000,  // 60 秒无响应则断开连接
   pingInterval: 30000, // 30 秒发送一次心跳
+  // 可选：大量连接时使用批量心跳，减少定时器数量
+  // useBatchHeartbeat: true,
 });
 
 // 心跳检测自动处理，无需手动管理
@@ -447,6 +458,40 @@ io.on("connection", (socket) => {
 io.listen();
 ```
 
+### 高并发优化（可选）
+
+大量连接场景下，可启用 `useBatchHeartbeat` 和 `useMessageQueue`：
+
+```typescript
+import { Server } from "jsr:@dreamer/websocket";
+
+const io = new Server({
+  port: 8080,
+  path: "/ws",
+  // 批量心跳：减少定时器数量，适合 >1000 连接
+  useBatchHeartbeat: true,
+  // 广播入队：broadcast/emitToRoom 通过 MessageQueue 发送，提供背压
+  useMessageQueue: true,
+  messageQueue: {
+    maxSize: 10000,
+    batchSize: 100,
+    processInterval: 10,
+  },
+  messageCache: {
+    maxSize: 1000,
+    ttl: 60000,
+  },
+});
+
+io.on("connection", (socket) => {
+  socket.on("message", (data) => {
+    io.broadcast("message", data); // 入队发送
+  });
+});
+
+io.listen();
+```
+
 **适配器选择建议**：
 - **单服务器**：无需配置适配器，使用默认内存适配器
 - **多服务器 + Redis**：推荐使用 Redis 适配器，性能好，延迟低
@@ -474,8 +519,15 @@ new Server(options?: ServerOptions)
 - `pingTimeout?: number`: 心跳超时（默认：60000ms）
 - `pingInterval?: number`: 心跳间隔（默认：30000ms）
 - `maxConnections?: number`: 最大连接数
+- `logger?: Logger`: 自定义 logger（默认使用 @dreamer/logger）
+- `debug?: boolean`: 是否输出调试日志（默认：false）
+- `t?: (key, params?) => string`: 翻译函数，用于 i18n
 - `encryption?: EncryptionConfig`: 加密配置
 - `adapter?: WebSocketAdapter`: 分布式适配器（Redis、MongoDB 或 Memory）
+- `messageCache?: { maxSize?, ttl? } | false`: 消息序列化缓存配置（默认启用）
+- `messageQueue?: { maxSize?, batchSize?, processInterval? } | false`: 消息队列配置（默认启用）
+- `useBatchHeartbeat?: boolean`: 是否使用批量心跳（默认：false）
+- `useMessageQueue?: boolean`: 广播是否通过消息队列发送（默认：false）
 
 **方法**：
 - `listen(host?: string, port?: number): void`: 启动服务器
@@ -655,20 +707,28 @@ const adapter = new MongoDBAdapter({
 - **心跳检测**：自动检测和清理无效连接，避免资源浪费
 - **连接池管理**：高效的连接池管理，支持大量并发连接
 - **异步操作**：所有操作都是异步的，不阻塞主线程
-- **消息缓存**：自动缓存序列化消息，减少重复序列化开销
+- **MessageCache**：消息序列化缓存，FNV-1a 快速哈希，LRU 驱逐
+- **MessageQueue**：`useMessageQueue=true` 时 broadcast/emitToRoom 入队发送，提供背压
+- **BatchHeartbeatManager**：`useBatchHeartbeat=true` 时集中管理心跳，减少定时器数量
 - **批量发送**：大量连接时自动分批发送消息，避免阻塞
-- **批量心跳**：集中管理心跳，减少定时器数量
-- **消息队列**：缓冲和批量处理消息，提高吞吐量
 - **加密缓存**：缓存加密结果，避免重复加密
 - **分布式优化**：支持 Redis 和 MongoDB 分布式部署，实现水平扩展
 
-详细优化方案请参考 [OPTIMIZATION.md](./OPTIMIZATION.md)
+详细优化方案请参考 [OPTIMIZATION.md](./OPTIMIZATION.md) 和 [OPTIMIZATION_ANALYSIS.md](./OPTIMIZATION_ANALYSIS.md)
 
 ---
 
 ## 🌐 客户端支持
 
 WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
+
+---
+
+## 📊 测试
+
+- **测试数量**：156 个测试用例，全部通过
+- **测试报告**：详见 [TEST_REPORT.md](./TEST_REPORT.md)
+- **运行测试**：`deno test -A tests` 或 `bun test tests`
 
 ---
 

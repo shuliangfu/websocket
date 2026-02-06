@@ -13,6 +13,14 @@ export interface AdapterOptions {
   serverId?: string;
   /** 键前缀（用于区分不同的应用） */
   keyPrefix?: string;
+  /**
+   * 翻译函数（可选，用于 i18n）
+   * 传入时，错误信息将使用 t(key, params) 获取翻译
+   */
+  t?: (
+    key: string,
+    params?: Record<string, string | number | boolean>,
+  ) => string | undefined;
 }
 
 /**
