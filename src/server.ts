@@ -9,6 +9,7 @@ import {
   type ServeHandle,
   upgradeWebSocket,
 } from "@dreamer/runtime-adapter";
+import { BatchHeartbeatManager } from "./batch-heartbeat.ts";
 import { EncryptionManager } from "./encryption.ts";
 import { MessageCache } from "./message-cache.ts";
 import { MessageQueue } from "./message-queue.ts";
@@ -59,6 +60,21 @@ export class Server {
   private serverId: string;
   /** Logger 实例（用于日志输出） */
   private readonly logger: Logger;
+  /** 批量心跳管理器（当 useBatchHeartbeat=true 时使用） */
+  private batchHeartbeatManager?: BatchHeartbeatManager;
+
+  /**
+   * 获取翻译文本，无 t 或翻译缺失时返回 fallback
+   * 供 Socket、Namespace 等子模块调用
+   */
+  tr(
+    key: string,
+    fallback: string,
+    params?: Record<string, string | number | boolean>,
+  ): string {
+    const r = this.options.t?.(key, params);
+    return (r != null && r !== key) ? r : fallback;
+  }
 
   /**
    * 调试日志：仅当 options.debug=true 时输出，使用 logger.debug（与 @dreamer/server 一致）
@@ -88,10 +104,13 @@ export class Server {
     // 初始化房间管理器
     this.roomManager = new RoomManager();
 
-    // 初始化命名空间管理器（默认命名空间）
+    // 初始化命名空间管理器（默认命名空间），传入 tr 供命名空间错误信息翻译
     const defaultNamespace = new Namespace("/");
     defaultNamespace.setServer(this);
-    this.namespaceManager = new NamespaceManager(defaultNamespace);
+    this.namespaceManager = new NamespaceManager(
+      defaultNamespace,
+      (key, fallback, params) => this.tr(key, fallback, params),
+    );
 
     // 初始化加密管理器（如果配置了加密）
     if (this.options.encryption) {
@@ -99,12 +118,36 @@ export class Server {
     }
 
     // 初始化消息缓存（用于优化大量连接场景）
-    // 默认缓存 1000 条消息，1 分钟过期
-    this.messageCache = new MessageCache(1000, 60000);
+    const mcOpt = this.options.messageCache;
+    if (mcOpt !== false) {
+      const maxSize = mcOpt?.maxSize ?? 1000;
+      const ttl = mcOpt?.ttl ?? 60000;
+      this.messageCache = new MessageCache(maxSize, ttl);
+    }
 
     // 初始化消息队列（用于缓冲和批量处理消息）
-    // 默认最大队列 10000 条，批次大小 100，处理间隔 10ms
-    this.messageQueue = new MessageQueue(10000, 100, 10);
+    const mqOpt = this.options.messageQueue;
+    if (mqOpt !== false) {
+      const maxSize = mqOpt?.maxSize ?? 10000;
+      const batchSize = mqOpt?.batchSize ?? 100;
+      const processInterval = mqOpt?.processInterval ?? 10;
+      this.messageQueue = new MessageQueue(
+        maxSize,
+        batchSize,
+        processInterval,
+        (msg, err) => this.logger.error(msg, undefined, err),
+      );
+    }
+
+    // 初始化批量心跳管理器（当 useBatchHeartbeat=true 时）
+    if (this.options.useBatchHeartbeat === true) {
+      const pingInterval = this.options.pingInterval || 30000;
+      const pingTimeout = this.options.pingTimeout || 60000;
+      this.batchHeartbeatManager = new BatchHeartbeatManager(
+        pingInterval,
+        pingTimeout,
+      );
+    }
 
     // 初始化分布式适配器（默认使用内存适配器）
     // 注意：构造函数不能是 async，所以使用同步导入
@@ -203,7 +246,13 @@ export class Server {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    this.debugLog(`收到请求 path=${pathname} method=${request.method}`);
+    this.debugLog(
+      this.tr(
+        "log.websocket.requestReceived",
+        `收到请求 path=${pathname} method=${request.method}`,
+        { path: pathname, method: request.method },
+      ),
+    );
 
     let matchedNamespace: Namespace | null = null;
     const allNamespaces = this.namespaceManager.getAll();
@@ -229,17 +278,35 @@ export class Server {
     }
 
     if (!matchedNamespace) {
-      this.debugLog(`路径不匹配 path=${pathname}，返回 404`);
+      this.debugLog(
+        this.tr(
+          "log.websocket.pathMismatch",
+          `路径不匹配 path=${pathname}，返回 404`,
+          { path: pathname },
+        ),
+      );
       return new Response("Not Found", { status: 404 });
     }
 
     try {
-      this.debugLog(`开始 WebSocket 升级 path=${pathname}`);
+      this.debugLog(
+        this.tr(
+          "log.websocket.upgradeStart",
+          `开始 WebSocket 升级 path=${pathname}`,
+          { path: pathname },
+        ),
+      );
       const upgradeResult = upgradeWebSocket(request);
       const { socket, response } = upgradeResult;
 
       if (!socket || typeof socket !== "object") {
-        throw new Error(`无效的 WebSocket 对象: ${typeof socket}`);
+        throw new Error(
+          this.tr(
+            "log.websocket.invalidSocketObject",
+            `无效的 WebSocket 对象: ${typeof socket}`,
+            { type: typeof socket },
+          ),
+        );
       }
 
       const hasAddEventListener =
@@ -252,9 +319,14 @@ export class Server {
           Object.getPrototypeOf(socket || {}),
         );
         throw new Error(
-          `WebSocket 对象缺少必要的方法。属性: ${
-            adapterKeys.join(", ")
-          }, 原型属性: ${prototypeKeys.join(", ")}`,
+          this.tr(
+            "log.websocket.socketMissingMethods",
+            `WebSocket 对象缺少必要的方法。属性: ${adapterKeys.join(", ")}, 原型属性: ${prototypeKeys.join(", ")}`,
+            {
+              adapterKeys: adapterKeys.join(", "),
+              prototypeKeys: prototypeKeys.join(", "),
+            },
+          ),
         );
       }
 
@@ -311,13 +383,29 @@ export class Server {
       this.emit("connection", socketInstance);
       matchedNamespace.emitConnection(socketInstance);
 
+      // 若使用批量心跳，将 Socket 加入批量心跳管理器
+      if (this.batchHeartbeatManager) {
+        this.batchHeartbeatManager.add(socketInstance);
+      }
+
       this.debugLog(
-        `WebSocket 升级成功 socketId=${socketInstance.id} path=${pathname}`,
+        this.tr(
+          "log.websocket.upgradeSuccess",
+          `WebSocket 升级成功 socketId=${socketInstance.id} path=${pathname}`,
+          { socketId: socketInstance.id, path: pathname },
+        ),
       );
       return response || new Response("WebSocket upgrade", { status: 101 });
     } catch (err) {
       this.debugLog(
-        `WebSocket 升级失败 path=${pathname}: ${err instanceof Error ? err.message : String(err)}`,
+        this.tr(
+          "log.websocket.upgradeFailed",
+          `WebSocket 升级失败 path=${pathname}: ${err instanceof Error ? err.message : String(err)}`,
+          {
+            path: pathname,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        ),
       );
       return new Response("WebSocket upgrade failed", { status: 500 });
     }
@@ -427,7 +515,16 @@ export class Server {
       });
     }
 
-    // 本地发送
+    // 使用消息队列时：入队由 MessageQueue 批量发送
+    if (this.options.useMessageQueue && this.messageQueue) {
+      const sockets = this.roomManager.getSocketsForRoom(room, excludeSocketId);
+      for (const socket of sockets) {
+        this.messageQueue.enqueue(socket, event, data);
+      }
+      return;
+    }
+
+    // 本地直接发送
     await this.roomManager.emitToRoom(
       room,
       event,
@@ -451,13 +548,31 @@ export class Server {
   ): Promise<void> {
     // 使用异步队列避免阻塞事件循环
     // 对于大量连接，分批发送消息
-    const sockets = Array.from(this.sockets.entries()).filter(
+    const socketList = Array.from(this.sockets.entries()).filter(
       ([socketId, socket]) => socketId !== excludeSocketId && socket.connected,
     );
 
-    if (sockets.length === 0) {
+    if (socketList.length === 0) {
       return;
     }
+
+    // 使用消息队列时：入队由 MessageQueue 批量发送，提供背压能力
+    if (this.options.useMessageQueue && this.messageQueue) {
+      // 先通过适配器广播到其他服务器
+      if (this.adapter?.broadcast) {
+        await this.adapter.broadcast({
+          event,
+          data,
+          excludeSocketId,
+        });
+      }
+      for (const [, socket] of socketList) {
+        this.messageQueue.enqueue(socket, event, data);
+      }
+      return;
+    }
+
+    const sockets = socketList;
 
     // 构建消息对象
     const message = {
@@ -577,11 +692,35 @@ export class Server {
       connectionsByRoom.set(room, this.roomManager.getRoomSize(room));
     }
 
-    return {
+    const stats: {
+      totalConnections: number;
+      totalRooms: number;
+      connectionsByRoom: Map<string, number>;
+      messageQueue?: {
+        size: number;
+        maxSize: number;
+        batchSize: number;
+        processing: boolean;
+      };
+      messageCache?: {
+        size: number;
+        maxSize: number;
+        hitRate: number;
+      };
+    } = {
       totalConnections: this.sockets.size,
       totalRooms: this.roomManager.getRooms().length,
       connectionsByRoom,
     };
+
+    if (this.messageQueue) {
+      stats.messageQueue = this.messageQueue.getStats();
+    }
+    if (this.messageCache) {
+      stats.messageCache = this.messageCache.getStats();
+    }
+
+    return stats;
   }
 
   /**
@@ -670,10 +809,25 @@ export class Server {
   }
 
   /**
+   * 处理 Socket 收到 pong（供 Socket 在 useBatchHeartbeat 模式下调用）
+   * @param socket Socket 实例
+   */
+  handleSocketPong(socket: Socket): void {
+    this.batchHeartbeatManager?.handlePong(socket);
+  }
+
+  /**
    * 移除 Socket
    * @param socketId Socket ID
    */
   async removeSocket(socketId: string): Promise<void> {
+    const socket = this.sockets.get(socketId);
+
+    // 从批量心跳管理器中移除
+    if (socket && this.batchHeartbeatManager) {
+      this.batchHeartbeatManager.remove(socket);
+    }
+
     // 从适配器中移除
     if (this.adapter?.removeSocketFromAllRooms) {
       await this.adapter.removeSocketFromAllRooms(socketId);
@@ -692,6 +846,9 @@ export class Server {
    * 关闭服务器
    */
   async close(): Promise<void> {
+    // 停止批量心跳
+    this.batchHeartbeatManager?.stop();
+
     // 关闭所有连接
     for (const socket of this.sockets.values()) {
       socket.disconnect("server shutdown");
@@ -703,7 +860,18 @@ export class Server {
         await Promise.race([
           this.httpServer.shutdown(),
           new Promise<void>((_, reject) => {
-            setTimeout(() => reject(new Error("服务器关闭超时")), 2000);
+            setTimeout(
+              () =>
+                reject(
+                  new Error(
+                    this.tr(
+                      "log.websocket.serverCloseTimeout",
+                      "服务器关闭超时",
+                    ),
+                  ),
+                ),
+              2000,
+            );
           }),
         ]);
       } catch {

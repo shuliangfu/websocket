@@ -84,7 +84,7 @@ export class RoomManager {
     for (const socketId of roomSockets) {
       if (socketId !== excludeSocketId) {
         const socket = this.sockets.get(socketId);
-        if (socket && (socket as any).connected) {
+        if (socket && socket.connected) {
           sockets.push(socket);
         }
       }
@@ -159,6 +159,27 @@ export class RoomManager {
     };
 
     sendBatch();
+  }
+
+  /**
+   * 获取房间内的 Socket 列表（供 MessageQueue 等使用）
+   * @param room 房间名称
+   * @param excludeSocketId 排除的 Socket ID
+   * @returns Socket 数组
+   */
+  getSocketsForRoom(room: string, excludeSocketId?: string): Socket[] {
+    const roomSockets = this.rooms.get(room);
+    if (!roomSockets) return [];
+    const result: Socket[] = [];
+    for (const socketId of roomSockets) {
+      if (socketId !== excludeSocketId) {
+        const socket = this.sockets.get(socketId);
+        if (socket && socket.connected) {
+          result.push(socket);
+        }
+      }
+    }
+    return result;
   }
 
   /**

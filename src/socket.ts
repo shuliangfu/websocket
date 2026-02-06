@@ -38,8 +38,16 @@ export class Socket {
     close: (code?: number, reason?: string) => void;
     readyState: number;
   };
-  /** 服务器实例 */
+  /** 服务器实例（内部使用，通过 getServer() 对外暴露） */
   private server: Server;
+
+  /**
+   * 获取服务器实例（供中间件、MessageQueue 等调用 tr 等方法）
+   * @returns Server 实例
+   */
+  getServer(): Server {
+    return this.server;
+  }
   /** 心跳管理器 */
   private heartbeatManager?: HeartbeatManager;
   /** 文件上传状态（上传ID -> 上传信息） */
@@ -75,7 +83,13 @@ export class Socket {
     encryptionManager?: EncryptionManager,
   ) {
     if (!ws || typeof ws !== "object") {
-      throw new Error(`无效的 WebSocket 对象: ${typeof ws}`);
+      throw new Error(
+        server.tr(
+          "log.websocket.invalidSocketObject",
+          `无效的 WebSocket 对象: ${typeof ws}`,
+          { type: typeof ws },
+        ),
+      );
     }
 
     // 检查是否有必要的方法（在 Bun 环境下，ws 应该是 WebSocketAdapter）
@@ -83,7 +97,12 @@ export class Socket {
       typeof (ws as any).addEventListener !== "function" &&
       typeof (ws as any).onmessage === "undefined"
     ) {
-      throw new Error("构造函数接收到的 WebSocket 对象缺少必要的方法");
+      throw new Error(
+        server.tr(
+          "log.websocket.socketMissingMethodsConstructor",
+          "构造函数接收到的 WebSocket 对象缺少必要的方法",
+        ),
+      );
     }
 
     this.ws = ws;
@@ -150,7 +169,11 @@ export class Socket {
 
         // 处理心跳响应
         if (message.type === "pong") {
-          this.heartbeatManager?.handlePong();
+          if (this.server.options.useBatchHeartbeat === true) {
+            this.server.handleSocketPong(this);
+          } else {
+            this.heartbeatManager?.handlePong();
+          }
           return;
         }
 
@@ -192,7 +215,12 @@ export class Socket {
     };
 
     if (!this.ws) {
-      throw new Error("WebSocket 对象未初始化");
+      throw new Error(
+        this.server.tr(
+          "log.websocket.socketNotInitialized",
+          "WebSocket 对象未初始化",
+        ),
+      );
     }
 
     // 检查是否有 addEventListener 方法
@@ -202,9 +230,14 @@ export class Socket {
       (this.ws as any).onmessage = messageHandler;
     } else {
       throw new Error(
-        `WebSocket 对象不支持消息监听。类型: ${typeof this.ws}, 属性: ${
-          Object.keys(this.ws || {}).join(", ")
-        }`,
+        this.server.tr(
+          "log.websocket.socketNoMessageListener",
+          `WebSocket 对象不支持消息监听。类型: ${typeof this.ws}, 属性: ${Object.keys(this.ws || {}).join(", ")}`,
+          {
+            type: typeof this.ws,
+            keys: Object.keys(this.ws || {}).join(", "),
+          },
+        ),
       );
     }
   }
@@ -259,7 +292,13 @@ export class Socket {
           reader.onerror = () => {
             // 读取失败，清理上传状态
             if (currentUploadId) {
-              this.cleanupFileUpload(currentUploadId, "读取文件分片失败");
+              this.cleanupFileUpload(
+                currentUploadId,
+                this.server.tr(
+                  "log.websocket.readFileChunkFailed",
+                  "读取文件分片失败",
+                ),
+              );
             }
           };
           reader.readAsArrayBuffer(data);
@@ -306,8 +345,12 @@ export class Socket {
       });
 
       // 设置上传超时（30秒无新分片则清理）
+      const uploadTimeoutMsg = this.server.tr(
+        "log.websocket.uploadTimeout",
+        "上传超时",
+      );
       const timeout = setTimeout(() => {
-        this.cleanupFileUpload(uploadId, "上传超时");
+        this.cleanupFileUpload(uploadId, uploadTimeoutMsg);
       }, 30000) as unknown as number;
       this.fileUploadTimers.set(uploadId, timeout);
     } else {
@@ -315,8 +358,12 @@ export class Socket {
       const existingTimeout = this.fileUploadTimers.get(uploadId);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
+        const uploadTimeoutMsg = this.server.tr(
+          "log.websocket.uploadTimeout",
+          "上传超时",
+        );
         const newTimeout = setTimeout(() => {
-          this.cleanupFileUpload(uploadId, "上传超时");
+          this.cleanupFileUpload(uploadId, uploadTimeoutMsg);
         }, 30000) as unknown as number;
         this.fileUploadTimers.set(uploadId, newTimeout);
       }
@@ -367,9 +414,16 @@ export class Socket {
         // 如果缺少分片，触发错误事件
         this.emit("file-upload-error", {
           uploadId,
-          error: `缺少分片 ${i}`,
+          error: this.server.tr(
+            "log.websocket.missingChunk",
+            `缺少分片 ${i}`,
+            { index: String(i) },
+          ),
         });
-        this.cleanupFileUpload(uploadId, "分片不完整");
+        this.cleanupFileUpload(
+          uploadId,
+          this.server.tr("log.websocket.chunksIncomplete", "分片不完整"),
+        );
         return;
       }
     }
@@ -448,7 +502,14 @@ export class Socket {
               },
             }).catch((err) => {
               // 忽略发送错误回调时的错误
-              console.error("发送错误回调失败:", err);
+              console.error(
+                this.server.tr(
+                  "log.websocket.sendErrorCallbackFailed",
+                  "发送错误回调失败",
+                  { error: err instanceof Error ? err.message : String(err) },
+                ),
+                err,
+              );
             });
           }
           // 触发错误事件
@@ -460,8 +521,12 @@ export class Socket {
 
   /**
    * 设置心跳检测
+   * 当 useBatchHeartbeat=true 时由 Server 的 BatchHeartbeatManager 统一管理，不创建独立 HeartbeatManager
    */
   private setupHeartbeat(): void {
+    if (this.server.options.useBatchHeartbeat === true) {
+      return;
+    }
     const pingInterval = this.server.options.pingInterval || 30000;
     const pingTimeout = this.server.options.pingTimeout || 60000;
 

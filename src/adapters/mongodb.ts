@@ -49,6 +49,8 @@ export interface MongoDBConnectionConfig {
   username?: string;
   /** 密码（可选） */
   password?: string;
+  /** 认证数据库（可选，默认 admin，用于 SCRAM 认证） */
+  authSource?: string;
   /** 副本集名称（可选，用于单节点副本集） */
   replicaSet?: string;
   /** 是否直接连接（默认：false，允许副本集连接） */
@@ -156,11 +158,21 @@ export class MongoDBAdapter implements WebSocketAdapter {
   private internalClient: any = null;
   private pollingTimer?: number;
   private useChangeStreams: boolean = true;
+  /** 翻译函数（可选） */
+  private tr: (
+    key: string,
+    fallback: string,
+    params?: Record<string, string | number | boolean>,
+  ) => string;
 
   constructor(options: MongoDBAdapterOptions) {
     this.connectionConfig = options.connection;
     this.heartbeatInterval = options.heartbeatInterval || 30;
     this.keyPrefix = options.keyPrefix || "ws";
+    this.tr = (key, fallback, params) => {
+      const r = options.t?.(key, params);
+      return (r != null && r !== key) ? r : fallback;
+    };
   }
 
   /**
@@ -227,7 +239,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
           error.message.includes("Cannot find module"))
       ) {
         throw new Error(
-          "MongoDB 客户端未安装。请安装 mongodb 包：deno add npm:mongodb",
+          this.tr(
+            "log.adapterMongo.clientNotInstalled",
+            "MongoDB 客户端未安装。请安装 mongodb 包：deno add npm:mongodb",
+          ),
         );
       }
 
@@ -243,15 +258,23 @@ export class MongoDBAdapter implements WebSocketAdapter {
       ) {
         const url = this.buildConnectionUrl();
         throw new Error(
-          `连接 MongoDB 失败（副本集相关）: ${errorMessage}\n` +
-            `连接 URL: ${url.replace(/\/\/[^:]+:[^@]+@/, "//***:***@")}\n` +
-            `提示：如果使用单节点副本集，请在配置中添加 replicaSet 参数，例如：\n` +
-            `{ host: "127.0.0.1", port: 27017, database: "xxx", replicaSet: "rs0" }`,
+          this.tr(
+            "log.adapterMongo.connectFailedReplicaSet",
+            `连接 MongoDB 失败（副本集相关）: ${errorMessage}\n` +
+              `连接 URL: ${url.replace(/\/\/[^:]+:[^@]+@/, "//***:***@")}\n` +
+              `提示：如果使用单节点副本集，请在配置中添加 replicaSet 参数，例如：\n` +
+              `{ host: "127.0.0.1", port: 27017, database: "xxx", replicaSet: "rs0" }`,
+            { error: errorMessage },
+          ),
         );
       }
 
       throw new Error(
-        `连接 MongoDB 失败: ${errorMessage}`,
+        this.tr(
+          "log.adapterMongo.connectFailed",
+          `连接 MongoDB 失败: ${errorMessage}`,
+          { error: errorMessage },
+        ),
       );
     }
   }
@@ -281,6 +304,11 @@ export class MongoDBAdapter implements WebSocketAdapter {
         params.set("directConnection", "false");
       }
 
+      // 认证数据库（SCRAM 认证时必需）
+      if (config.authSource && !params.has("authSource")) {
+        params.set("authSource", config.authSource);
+      }
+
       url.search = params.toString();
       return url.toString();
     }
@@ -300,6 +328,13 @@ export class MongoDBAdapter implements WebSocketAdapter {
       params.set("directConnection", String(config.directConnection));
     }
 
+    // 认证数据库（SCRAM 认证时必需，默认 admin）
+    if (config.authSource) {
+      params.set("authSource", config.authSource);
+    } else if (config.username && config.password) {
+      params.set("authSource", "admin");
+    }
+
     const queryString = params.toString();
     const query = queryString ? `?${queryString}` : "";
 
@@ -315,7 +350,9 @@ export class MongoDBAdapter implements WebSocketAdapter {
    */
   private async initializeCollections(): Promise<void> {
     if (!this.db) {
-      throw new Error("MongoDB 数据库未连接");
+      throw new Error(
+        this.tr("log.adapterMongo.databaseNotConnected", "MongoDB 数据库未连接"),
+      );
     }
 
     // 房间集合（存储房间和 Socket 的关系）- 使用 keyPrefix 隔离不同应用
@@ -346,7 +383,13 @@ export class MongoDBAdapter implements WebSocketAdapter {
       }
     } catch (error) {
       // 索引可能已存在，忽略错误
-      console.warn("创建 MongoDB 索引失败（可能已存在）:", error);
+      console.warn(
+        this.tr(
+          "log.adapterMongo.createIndexFailed",
+          "创建 MongoDB 索引失败（可能已存在）",
+        ),
+        error,
+      );
     }
   }
 
@@ -507,7 +550,12 @@ export class MongoDBAdapter implements WebSocketAdapter {
     callback: (message: MessageData, serverId: string) => void,
   ): Promise<void> | void {
     if (!this.messagesCollection) {
-      throw new Error("MongoDB 消息集合未初始化");
+      throw new Error(
+        this.tr(
+          "log.adapterMongo.messagesCollectionNotInitialized",
+          "MongoDB 消息集合未初始化",
+        ),
+      );
     }
 
     // 更新 messageCallback（支持多次调用，覆盖之前的 callback）
@@ -569,7 +617,13 @@ export class MongoDBAdapter implements WebSocketAdapter {
               }
             }
           } catch (error) {
-            console.error("处理 MongoDB 变更事件失败:", error);
+            console.error(
+              this.tr(
+                "log.adapterMongo.changeEventFailed",
+                "处理 MongoDB 变更事件失败",
+              ),
+              error,
+            );
           }
         });
 
@@ -583,7 +637,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
             errorMessage.includes("not a replica set")
           ) {
             console.warn(
-              "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
+              this.tr(
+                "log.adapterMongo.changeStreamsUnavailable",
+                "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
+              ),
             );
             this.useChangeStreams = false;
             if (this.changeStream) {
@@ -592,7 +649,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
             }
             this.startPolling(callback);
           } else {
-            console.error("MongoDB Change Streams 错误:", error);
+            console.error(
+              this.tr("log.adapterMongo.changeStreamsError", "MongoDB Change Streams 错误"),
+              error,
+            );
           }
         });
 
@@ -608,7 +668,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
           errorMessage.includes("not a replica set")
         ) {
           console.warn(
-            "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
+            this.tr(
+              "log.adapterMongo.changeStreamsUnavailable",
+              "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
+            ),
           );
           this.useChangeStreams = false;
           this.startPolling(callback);
@@ -684,7 +747,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
           processedIds = new Set(idsArray.slice(-500));
         }
       } catch (error) {
-        console.error("MongoDB 轮询错误:", error);
+        console.error(
+          this.tr("log.adapterMongo.pollingError", "MongoDB 轮询错误"),
+          error,
+        );
       }
     };
 

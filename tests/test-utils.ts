@@ -55,3 +55,29 @@ export function waitForMessage(
     };
   });
 }
+
+/**
+ * 等待 WebSocket 收到指定事件（过滤 ping/pong 等）
+ */
+export function waitForEvent(
+  ws: WebSocket,
+  eventName: string,
+  timeout = 5000,
+): Promise<{ event: string; data?: unknown }> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("等待事件超时")), timeout);
+    const handler = (ev: MessageEvent) => {
+      try {
+        const data = JSON.parse(ev.data as string);
+        if (data.event === eventName) {
+          clearTimeout(timer);
+          ws.removeEventListener("message", handler as EventListener);
+          resolve(data);
+        }
+      } catch {
+        // 忽略解析错误
+      }
+    };
+    ws.addEventListener("message", handler);
+  });
+}

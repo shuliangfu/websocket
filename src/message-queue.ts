@@ -20,6 +20,11 @@ interface QueueItem {
 }
 
 /**
+ * 错误回调类型（用于统一错误处理）
+ */
+export type MessageQueueErrorHandler = (message: string, error: unknown) => void;
+
+/**
  * 消息队列管理器
  * 用于缓冲和批量处理消息，避免阻塞事件循环
  */
@@ -34,21 +39,26 @@ export class MessageQueue {
   private processing = false;
   /** 处理间隔（毫秒） */
   private processInterval: number;
+  /** 错误处理器（可选，用于替代 console.error） */
+  private onError?: MessageQueueErrorHandler;
 
   /**
    * 创建消息队列管理器
    * @param maxSize 最大队列大小（默认：10000）
    * @param batchSize 批次大小（默认：100）
    * @param processInterval 处理间隔（毫秒，默认：10）
+   * @param onError 错误处理器（可选，用于通过 logger 等记录错误）
    */
   constructor(
     maxSize: number = 10000,
     batchSize: number = 100,
     processInterval: number = 10,
+    onError?: MessageQueueErrorHandler,
   ) {
     this.maxSize = maxSize;
     this.batchSize = batchSize;
     this.processInterval = processInterval;
+    this.onError = onError;
   }
 
   /**
@@ -116,6 +126,7 @@ export class MessageQueue {
 
   /**
    * 处理队列中的消息
+   * 按优先级处理，同优先级保持 FIFO，避免每次全量排序
    */
   private async process(): Promise<void> {
     if (this.processing) {
@@ -125,8 +136,13 @@ export class MessageQueue {
     this.processing = true;
 
     while (this.queue.length > 0) {
-      // 按优先级排序（优先级高的先处理）
-      this.queue.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+      // 按优先级分桶，仅在有不同优先级时排序，否则保持 FIFO
+      const hasMultiplePriorities = this.queue.some(
+        (a, i) => i > 0 && (a.priority ?? 0) !== (this.queue[0].priority ?? 0),
+      );
+      if (hasMultiplePriorities) {
+        this.queue.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+      }
 
       // 取出一批消息
       const batch = this.queue.splice(0, this.batchSize);
@@ -139,8 +155,17 @@ export class MessageQueue {
             await item.socket.emit(item.event, item.data);
           }
         } catch (error) {
-          // 忽略发送失败的错误（Socket 可能已断开）
-          console.error(`消息发送失败: ${error}`);
+          // 忽略发送失败的错误（Socket 可能已断开），通过 onError 或 console 记录
+          const msg = item.socket.getServer()?.tr?.(
+            "log.websocket.messageSendFailed",
+            `消息发送失败: ${error}`,
+            { error: error instanceof Error ? error.message : String(error) },
+          ) ?? `消息发送失败: ${error}`;
+          if (this.onError) {
+            this.onError(msg, error);
+          } else {
+            console.error(msg, error);
+          }
         }
       }
 

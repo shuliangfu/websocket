@@ -74,15 +74,15 @@ export class HeartbeatManager {
     }
 
     // 发送 ping 消息（异步发送，不等待）
-    (this.socket as any).sendMessage({ type: "ping" }).catch(() => {
+    this.socket.sendMessage({ type: "ping" }).catch(() => {
       // 忽略发送失败的错误
     });
 
     // 设置超时定时器
     this.pingTimeoutTimer = setTimeout(() => {
-      if (this.started && (this.socket as any).connected) {
+      if (this.started && this.socket.connected) {
         // 心跳超时，断开连接
-        (this.socket as any).disconnect("ping timeout");
+        this.socket.disconnect("ping timeout");
       }
     }, this.pingTimeout) as unknown as number;
 
