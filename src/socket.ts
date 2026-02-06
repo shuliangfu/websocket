@@ -48,6 +48,18 @@ export class Socket {
   getServer(): Server {
     return this.server;
   }
+
+  /**
+   * 获取底层原生 WebSocket 实例
+   *
+   * 供插件等需要标准 WebSocket API（send、onmessage 等）的场景使用，
+   * 例如 @dreamer/plugin 的 WebSocketContext 需要原生 WebSocket。
+   *
+   * @returns 原生 WebSocket 实例
+   */
+  getRawSocket(): WebSocket {
+    return this.ws as WebSocket;
+  }
   /** 心跳管理器 */
   private heartbeatManager?: HeartbeatManager;
   /** 文件上传状态（上传ID -> 上传信息） */
