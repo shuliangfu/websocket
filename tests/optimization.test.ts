@@ -334,9 +334,9 @@ describe("useMessageQueue 广播通过消息队列", () => {
 // ========== useBatchHeartbeat 批量心跳 ==========
 describe("useBatchHeartbeat 批量心跳", () => {
   it("useBatchHeartbeat=true 时应能正常收发心跳", async () => {
-    const testPort = getAvailablePort();
+    // 使用 port 0 由系统分配端口，避免 Windows CI 下随机端口权限错误 (10013)
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       pingInterval: 500,
       pingTimeout: 2000,
@@ -348,6 +348,7 @@ describe("useBatchHeartbeat 批量心跳", () => {
     await server.listen();
     await delay(200);
 
+    const testPort = server.getPort();
     const ws = await createWebSocketClient(`ws://localhost:${testPort}/ws`);
     await delay(300);
 

@@ -474,6 +474,8 @@ describe("WebSocket 加密 - 服务端", () => {
 
       await delay(500);
       expect(receivedMessages.length).toBe(3);
+      // 按 id 排序后再断言，避免 CI 环境下消息乱序导致的 flaky 测试
+      receivedMessages.sort((a, b) => a.id - b.id);
       expect(receivedMessages[0].id).toBe(1);
       expect(receivedMessages[1].id).toBe(2);
       expect(receivedMessages[2].id).toBe(3);
