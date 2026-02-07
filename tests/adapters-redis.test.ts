@@ -46,6 +46,7 @@ describe("Redis 适配器 - 真实场景测试", () => {
   const serverId2 = "server-2";
 
   it("应该能够初始化和关闭适配器", async () => {
+    if (!redisAvailable) return;
     const testPort1 = getAvailablePort();
     server1 = new Server({
       port: testPort1,
@@ -67,6 +68,7 @@ describe("Redis 适配器 - 真实场景测试", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持添加和移除 Socket 到房间", async () => {
+    if (!redisAvailable) return;
     const testPort1 = getAvailablePort();
     server1 = new Server({
       port: testPort1,
