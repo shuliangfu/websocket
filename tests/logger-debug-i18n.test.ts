@@ -1,9 +1,11 @@
 /**
  * @fileoverview logger、debug、t（翻译）参数全面测试
  * 验证 Server 和中间件的 logger、debug、t 配置正确生效
+ * 注：Windows CI 上端口绑定可能触发 10013 权限错误，相关测试在 Windows 上跳过
  */
 
 import type { Logger } from "@dreamer/logger";
+import { platform } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
 import {
@@ -16,6 +18,8 @@ import {
   delay,
   getAvailablePort,
 } from "./test-utils.ts";
+
+const isWindows = platform() === "windows";
 
 /**
  * Mock Logger 接口（仅包含测试需要的方法）
@@ -66,7 +70,7 @@ describe("Server logger、debug、t 参数", () => {
   });
 
   describe("debug 参数", () => {
-    it("debug=true 时应在收到请求时调用 logger.debug", async () => {
+    it.skipIf(isWindows, "debug=true 时应在收到请求时调用 logger.debug", async () => {
       const mockLogger = createMockLogger();
       const testPort = getAvailablePort();
       const server = new Server({
@@ -100,7 +104,7 @@ describe("Server logger、debug、t 参数", () => {
       await delay(100);
     }, { sanitizeOps: false, sanitizeResources: false });
 
-    it("debug=false 时不应调用 logger.debug", async () => {
+    it.skipIf(isWindows, "debug=false 时不应调用 logger.debug", async () => {
       const mockLogger = createMockLogger();
       const testPort = getAvailablePort();
       const server = new Server({
@@ -127,7 +131,7 @@ describe("Server logger、debug、t 参数", () => {
   });
 
   describe("t 翻译参数", () => {
-    it("传入 t 函数时 debug 日志应使用翻译结果", async () => {
+    it.skipIf(isWindows, "传入 t 函数时 debug 日志应使用翻译结果", async () => {
       const mockLogger = createMockLogger();
       const tCalls: Array<{ key: string; params?: Record<string, string | number | boolean> }> = [];
       const customT = (
@@ -214,7 +218,7 @@ describe("Server logger、debug、t 参数", () => {
 });
 
 describe("loggerMiddleware logger、t 参数", () => {
-  it("应使用传入的自定义 logger 记录连接日志", async () => {
+  it.skipIf(isWindows, "应使用传入的自定义 logger 记录连接日志", async () => {
     const mockLogger = createMockLogger();
     const testPort = getAvailablePort();
     const server = new Server({ port: testPort, path: "/ws" });
@@ -239,7 +243,7 @@ describe("loggerMiddleware logger、t 参数", () => {
     await delay(100);
   }, { sanitizeOps: false, sanitizeResources: false });
 
-  it("loggerMiddleware 应使用 server.tr 进行翻译", async () => {
+  it.skipIf(isWindows, "loggerMiddleware 应使用 server.tr 进行翻译", async () => {
     const mockLogger = createMockLogger();
     const tCalls: string[] = [];
     const customT = (key: string) => {
@@ -298,7 +302,7 @@ describe("适配器 t 翻译参数", () => {
 });
 
 describe("authMiddleware t 翻译参数", () => {
-  it("认证失败时 authMiddleware 应使用 server.tr 翻译错误信息", async () => {
+  it.skipIf(isWindows, "认证失败时 authMiddleware 应使用 server.tr 翻译错误信息", async () => {
     const customT = (key: string) => {
       if (key === "log.websocket.authFailed") return "Authentication failed (en)";
       return undefined;
