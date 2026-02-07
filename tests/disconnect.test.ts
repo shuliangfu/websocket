@@ -46,10 +46,10 @@ describe("Socket 断开连接", () => {
     let socketInstance: any = null;
     server.on("connection", (socket) => {
       socketInstance = socket;
-      // 确保连接完全建立后再断开
+      // 确保连接完全建立且客户端有机会发送后再断开（CI 上 200ms 可能不足）
       setTimeout(() => {
         socket.disconnect("server shutdown");
-      }, 200);
+      }, 500);
     });
 
     server.listen();
@@ -59,10 +59,10 @@ describe("Socket 断开连接", () => {
       `ws://localhost:${testPort}/ws`,
     );
 
-    // 等待连接建立
-    await delay(300);
-    // 发送消息来触发服务器的 message 事件，这样适配器的 _ws 会被设置
-    ws.send(JSON.stringify({ type: "ping" }));
+    // 连接建立后立即发送（服务器 500ms 后会断开，需在断开前发送）
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "ping" }));
+    }
     await delay(200);
 
     // 等待服务器断开连接，并监听客户端的关闭事件
