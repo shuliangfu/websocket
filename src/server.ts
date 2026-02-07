@@ -414,13 +414,14 @@ export class Server {
   /**
    * 启动服务器
    * @param host 主机地址（可选）
-   * @param port 端口号（可选）
+   * @param port 端口号（可选），传 0 时由系统自动分配可用端口
    */
   async listen(host?: string, port?: number): Promise<void> {
     await this.ensureAdapter();
 
     const serverHost = host || this.options.host || "0.0.0.0";
-    const serverPort = port || this.options.port || 8080;
+    // 使用 ?? 支持 port 0（系统自动分配），避免 || 将 0 误判为未指定
+    const serverPort = port ?? this.options.port ?? 8080;
 
     this.httpServer = serve(
       {
@@ -429,6 +430,17 @@ export class Server {
       },
       (request: Request) => this.handleRequest(request),
     );
+  }
+
+  /**
+   * 获取实际监听端口
+   * 当使用 port 0 时由系统分配，此方法返回实际端口号
+   * @returns 监听端口，未启动时返回 options.port 或 8080
+   */
+  getPort(): number {
+    const actual = this.httpServer?.port;
+    if (actual !== undefined && actual !== null) return actual;
+    return this.options.port ?? 8080;
   }
 
   /**
