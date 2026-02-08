@@ -5,16 +5,11 @@
 
 import { describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 describe("WebSocket 连接和消息", () => {
   it("应该接受 WebSocket 连接", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let socketConnected = false;
 
     server.on("connection", (socket) => {
@@ -26,6 +21,7 @@ describe("WebSocket 连接和消息", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -41,8 +37,7 @@ describe("WebSocket 连接和消息", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该创建握手信息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let handshakeReceived = false;
 
     server.on("connection", (socket) => {
@@ -55,6 +50,7 @@ describe("WebSocket 连接和消息", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws?token=abc123`,
@@ -70,8 +66,7 @@ describe("WebSocket 连接和消息", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该处理文本消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let messageReceived = false;
     let receivedData: any = null;
 
@@ -84,6 +79,7 @@ describe("WebSocket 连接和消息", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -111,8 +107,7 @@ describe("WebSocket 连接和消息", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该发送消息到客户端", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     // 设置消息监听器（在连接建立之前）
     let messageReceived = false;
@@ -128,6 +123,7 @@ describe("WebSocket 连接和消息", () => {
 
     server.listen();
     await delay(300);
+    const testPort = server.getPort();
 
     // 在创建 WebSocket 之前设置消息监听器
     const wsPromise = new Promise<WebSocket>((resolve, reject) => {
@@ -171,8 +167,7 @@ describe("WebSocket 连接和消息", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该处理心跳消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.on("connection", (socket) => {
       // 心跳处理是自动的
@@ -180,6 +175,7 @@ describe("WebSocket 连接和消息", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
