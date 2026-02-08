@@ -5,19 +5,15 @@
 
 import { describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 describe("错误处理", () => {
   it("应该处理无效路径的请求", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     try {
       const ws = await createWebSocketClient(
@@ -34,8 +30,7 @@ describe("错误处理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该处理无效 JSON 消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.on("connection", (socket) => {
       socket.on("error", () => {
@@ -45,6 +40,7 @@ describe("错误处理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,

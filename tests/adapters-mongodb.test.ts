@@ -9,7 +9,7 @@ import { MongoClient } from "mongodb";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
 import { Server } from "../src/mod.ts";
 import type { ServerOptions } from "../src/types.ts";
-import { delay, getAvailablePort } from "./test-utils.ts";
+import { delay } from "./test-utils.ts";
 
 /** 获取环境变量，带默认值 */
 function getEnvWithDefault(key: string, defaultValue: string): string {
@@ -66,9 +66,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该能够初始化和关闭适配器", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
     const options: ServerOptions = {
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -88,9 +87,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该支持添加和移除 Socket 到房间", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
     server1 = new Server({
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -100,6 +98,7 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
     await server1.listen();
     await delay(2000);
+    const testPort1 = server1.getPort();
 
     // 先注册事件监听器，然后再建立连接
     server1.on("connection", (socket) => {
@@ -146,9 +145,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该支持服务器注册和注销", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
     server1 = new Server({
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -182,11 +180,9 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该支持消息广播和订阅（多服务器场景）", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
-    const testPort2 = getAvailablePort();
 
     server1 = new Server({
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -196,7 +192,7 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     });
 
     server2 = new Server({
-      port: testPort2,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -208,6 +204,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     await server1.listen();
     await server2.listen();
     await delay(3000); // MongoDB 连接需要更多时间
+    const testPort1 = server1.getPort();
+    const testPort2 = server2.getPort();
 
     const server1Internal = server1 as unknown as { adapter?: MongoDBAdapter };
     const server2Internal = server2 as unknown as { adapter?: MongoDBAdapter };
@@ -267,11 +265,9 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该支持房间广播（多服务器场景）", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
-    const testPort2 = getAvailablePort();
 
     server1 = new Server({
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -281,7 +277,7 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     });
 
     server2 = new Server({
-      port: testPort2,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -293,6 +289,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     await server1.listen();
     await server2.listen();
     await delay(3000);
+    const testPort1 = server1.getPort();
+    const testPort2 = server2.getPort();
 
     // 在 server1 上创建客户端并加入房间
     const ws1 = new WebSocket(`ws://localhost:${testPort1}/ws`);
@@ -350,11 +348,9 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
   it("应该支持多服务器场景的房间管理", async () => {
     if (!mongoDBAvailable) return;
-    const testPort1 = getAvailablePort();
-    const testPort2 = getAvailablePort();
 
     server1 = new Server({
-      port: testPort1,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -364,7 +360,7 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     });
 
     server2 = new Server({
-      port: testPort2,
+      port: 0,
       path: "/ws",
       adapter: new MongoDBAdapter({
         connection: MONGODB_CONFIG,
@@ -376,6 +372,8 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
     await server1.listen();
     await server2.listen();
     await delay(3000);
+    const testPort1 = server1.getPort();
+    const testPort2 = server2.getPort();
 
     const server1Internal = server1 as unknown as { adapter?: MongoDBAdapter };
     const server2Internal = server2 as unknown as { adapter?: MongoDBAdapter };

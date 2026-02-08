@@ -7,18 +7,13 @@
 import { platform } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 const isWindows = platform() === "windows";
 
 describe("Socket 事件系统", () => {
   it.skipIf(isWindows, "应该支持多个事件监听器", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let callCount = 0;
 
     server.on("connection", (socket) => {
@@ -33,6 +28,7 @@ describe("Socket 事件系统", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -58,8 +54,7 @@ describe("Socket 事件系统", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it.skipIf(isWindows, "应该支持移除事件监听器", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let callCount = 0;
 
     server.on("connection", (socket) => {
@@ -73,6 +68,7 @@ describe("Socket 事件系统", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -95,8 +91,7 @@ describe("Socket 事件系统", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it.skipIf(isWindows, "应该支持移除所有事件监听器", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let callCount = 0;
 
     server.on("connection", (socket) => {
@@ -113,6 +108,7 @@ describe("Socket 事件系统", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -138,8 +134,7 @@ describe("Socket 事件系统", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it.skipIf(isWindows, "应该支持回调函数", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.on("connection", (socket) => {
       socket.on(
@@ -154,6 +149,7 @@ describe("Socket 事件系统", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,

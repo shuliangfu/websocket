@@ -8,15 +8,13 @@ import { Server } from "../src/mod.ts";
 import {
   createWebSocketClient,
   delay,
-  getAvailablePort,
   waitForMessage,
 } from "./test-utils.ts";
 
 describe("心跳检测", () => {
   it("应该发送心跳消息", async () => {
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       pingInterval: 1000,
       pingTimeout: 2000,
@@ -28,6 +26,7 @@ describe("心跳检测", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -55,9 +54,8 @@ describe("心跳检测", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该处理心跳响应", async () => {
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       pingInterval: 1000,
       pingTimeout: 2000,
@@ -69,6 +67,7 @@ describe("心跳检测", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,

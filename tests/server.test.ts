@@ -5,11 +5,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 describe("WebSocket Server", () => {
   describe("Server 构造函数和配置", () => {
@@ -80,11 +76,9 @@ describe("WebSocket Server", () => {
 
   describe("Server 启动和关闭", () => {
     let server: Server;
-    let testPort: number;
 
     beforeAll(() => {
-      testPort = getAvailablePort();
-      server = new Server({ port: testPort, path: "/ws" });
+      server = new Server({ port: 0, path: "/ws" });
     });
 
     afterAll(async () => {
@@ -100,11 +94,10 @@ describe("WebSocket Server", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it("应该支持自定义 host 和 port", () => {
-      const customPort = getAvailablePort();
-      const customServer = new Server({ port: customPort });
+      const customServer = new Server({ port: 0 });
 
       expect(() => {
-        customServer.listen("127.0.0.1", customPort);
+        customServer.listen("127.0.0.1", 0);
       }).not.toThrow();
 
       // 清理
@@ -112,7 +105,7 @@ describe("WebSocket Server", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it("应该关闭服务器", async () => {
-      const testServer = new Server({ port: getAvailablePort() });
+      const testServer = new Server({ port: 0 });
       testServer.listen();
 
       expect(async () => {
@@ -122,15 +115,16 @@ describe("WebSocket Server", () => {
 
     it("应该关闭所有连接", async () => {
       const testServer = new Server({
-        port: getAvailablePort(),
+        port: 0,
         path: "/test",
       });
       testServer.listen();
+      const testPort = testServer.getPort();
 
       // 创建一个连接
       try {
         const ws = await createWebSocketClient(
-          `ws://localhost:${testServer.options.port}/test`,
+          `ws://localhost:${testPort}/test`,
         );
         await delay(100);
         // 发送消息来触发服务器的 message 事件，这样适配器的 _ws 会被设置

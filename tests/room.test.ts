@@ -8,14 +8,12 @@ import { Server, Socket } from "../src/mod.ts";
 import {
   createWebSocketClient,
   delay,
-  getAvailablePort,
   waitForMessage,
 } from "./test-utils.ts";
 
 describe("Socket 房间管理", () => {
   it("应该支持加入房间", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let socketJoined = false;
 
     server.on("connection", (socket) => {
@@ -25,6 +23,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -41,8 +40,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持离开房间", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.on("connection", (socket) => {
       socket.join("room1");
@@ -51,6 +49,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -68,8 +67,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该向房间发送消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let messageReceived = false;
     let socket1: Socket | null = null;
 
@@ -88,6 +86,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws1 = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -125,8 +124,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持广播消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let broadcastReceived = false;
     let socket1: Socket | null = null;
 
@@ -143,6 +141,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws1 = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -180,8 +179,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持批量加入房间", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let roomsJoined: string[] = [];
 
     server.on("connection", (socket) => {
@@ -191,6 +189,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -213,8 +212,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持批量离开房间", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let roomsAfterLeave: string[] = [];
 
     server.on("connection", (socket) => {
@@ -225,6 +223,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -246,8 +245,7 @@ describe("Socket 房间管理", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持批量向房间发送消息", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
     let messageCount = 0;
     let socket1: Socket | null = null;
 
@@ -266,6 +264,7 @@ describe("Socket 房间管理", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws1 = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
