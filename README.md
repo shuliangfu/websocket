@@ -647,6 +647,17 @@ See [client/README.md](./src/client/README.md) for WebSocket client usage.
 
 ---
 
+## 📋 Changelog
+
+| Version | Date | Changes |
+|---------|------|---------|
+| [1.0.1](CHANGELOG.md#101---2026-02-08) | 2026-02-08 | Fixed: Windows CI compatibility (port 0 + getPort) |
+| [1.0.0](CHANGELOG.md#100---2026-02-06) | 2026-02-06 | First stable release |
+
+See [CHANGELOG.md](./CHANGELOG.md) for full history.
+
+---
+
 ## 📊 Tests
 
 - **Tests**: 156 test cases, all passed

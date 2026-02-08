@@ -726,6 +726,17 @@ WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
 
 ---
 
+## 📋 变更日志
+
+| 版本 | 日期 | 变更 |
+|------|------|------|
+| [1.0.1](CHANGELOG-zh.md#101---2026-02-08) | 2026-02-08 | 修复：Windows CI 兼容性（port 0 + getPort） |
+| [1.0.0](CHANGELOG-zh.md#100---2026-02-06) | 2026-02-06 | 首个稳定版 |
+
+完整历史见 [CHANGELOG-zh.md](./CHANGELOG-zh.md)。
+
+---
+
 ## 📊 测试
 
 - **测试数量**：156 个测试用例，全部通过
