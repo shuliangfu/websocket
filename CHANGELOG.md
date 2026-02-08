@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.1] - 2026-02-08
+
+### Fixed
+
+- **Windows CI compatibility**: Use `port: 0` + `server.getPort()` instead of `getAvailablePort()` to fix port conflicts (PermissionDenied 10013, AddrInUse 10048) on Windows CI runners
+
+---
+
 ## [1.0.0] - 2026-02-06
 
 ### Added
