@@ -7,7 +7,7 @@ import { describe, expect, it } from "@dreamer/test";
 import { Client } from "../src/client/mod.ts";
 import { EncryptionManager } from "../src/encryption.ts";
 import { Server } from "../src/mod.ts";
-import { delay, getAvailablePort } from "./test-utils.ts";
+import { delay } from "./test-utils.ts";
 
 describe("EncryptionManager", () => {
   describe("构造函数", () => {
@@ -340,11 +340,10 @@ describe("EncryptionManager", () => {
 describe("WebSocket 加密 - 服务端", () => {
   describe("服务端接收加密消息", () => {
     it("应该能够接收并自动解密客户端发送的加密消息", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: {
           key,
@@ -362,6 +361,7 @@ describe("WebSocket 加密 - 服务端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       // 使用加密客户端连接
       const client = new Client({
@@ -414,11 +414,10 @@ describe("WebSocket 加密 - 服务端", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it("应该能够处理多个加密消息", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -433,6 +432,7 @@ describe("WebSocket 加密 - 服务端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -489,11 +489,10 @@ describe("WebSocket 加密 - 服务端", () => {
 
   describe("服务端发送加密消息", () => {
     it("应该能够发送自动加密的消息给客户端", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -504,6 +503,7 @@ describe("WebSocket 加密 - 服务端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -537,11 +537,10 @@ describe("WebSocket 加密 - 服务端", () => {
 describe("WebSocket 加密 - 客户端", () => {
   describe("客户端发送加密消息", () => {
     it("应该能够发送自动加密的消息给服务端", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -556,6 +555,7 @@ describe("WebSocket 加密 - 客户端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -605,11 +605,10 @@ describe("WebSocket 加密 - 客户端", () => {
 
   describe("客户端接收加密消息", () => {
     it("应该能够接收并自动解密服务端发送的加密消息", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -620,6 +619,7 @@ describe("WebSocket 加密 - 客户端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -652,11 +652,10 @@ describe("WebSocket 加密 - 客户端", () => {
 describe("WebSocket 加密 - 端到端", () => {
   describe("完整通信流程", () => {
     it("应该支持双向加密通信", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -673,6 +672,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -717,11 +717,10 @@ describe("WebSocket 加密 - 端到端", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it("应该支持回调机制与加密", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -736,6 +735,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -786,14 +786,13 @@ describe("WebSocket 加密 - 端到端", () => {
 
     for (const algorithm of algorithms) {
       it(`应该支持 ${algorithm} 算法的端到端加密`, async () => {
-        const testPort = getAvailablePort();
         const keyLength = algorithm.includes("128") ? 16 : 32;
         const key = EncryptionManager.generateKey(
           keyLength === 16 ? "aes-128" : "aes-256",
         );
 
         const server = new Server({
-          port: testPort,
+          port: 0,
           path: "/ws",
           encryption: { key, algorithm },
         });
@@ -809,6 +808,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
         server.listen();
         await delay(200);
+        const testPort = server.getPort();
 
         const client = new Client({
           url: `ws://localhost:${testPort}/ws`,
@@ -857,12 +857,11 @@ describe("WebSocket 加密 - 端到端", () => {
 
   describe("密钥不匹配", () => {
     it("应该拒绝使用不同密钥的客户端", async () => {
-      const testPort = getAvailablePort();
       const serverKey = EncryptionManager.generateKey("aes-256");
       const clientKey = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key: serverKey },
       });
@@ -875,6 +874,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -907,11 +907,10 @@ describe("WebSocket 加密 - 端到端", () => {
 
   describe("字符串密钥", () => {
     it("应该支持使用字符串密钥", async () => {
-      const testPort = getAvailablePort();
       const keyString = "my-secret-key-32-bytes-long!!!!!"; // 32 字节
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: {
           key: keyString,
@@ -929,6 +928,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -981,7 +981,6 @@ describe("WebSocket 加密 - 端到端", () => {
 
   describe("密码派生密钥", () => {
     it("应该支持使用密码派生的密钥", async () => {
-      const testPort = getAvailablePort();
       const password = "my-secret-password";
 
       const serverKey = await EncryptionManager.deriveKeyFromPassword(
@@ -994,7 +993,7 @@ describe("WebSocket 加密 - 端到端", () => {
       );
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: {
           key: serverKey,
@@ -1012,6 +1011,7 @@ describe("WebSocket 加密 - 端到端", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -1065,12 +1065,11 @@ describe("WebSocket 加密 - 端到端", () => {
 
 describe("WebSocket 加密 - 混合场景", () => {
   it("应该支持未加密的服务端和加密的客户端", async () => {
-    const testPort = getAvailablePort();
     const key = EncryptionManager.generateKey("aes-256");
 
     // 服务端不启用加密
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
     });
 
@@ -1088,6 +1087,7 @@ describe("WebSocket 加密 - 混合场景", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     // 客户端启用加密
     const client = new Client({
@@ -1137,12 +1137,11 @@ describe("WebSocket 加密 - 混合场景", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持加密的服务端和未加密的客户端", async () => {
-    const testPort = getAvailablePort();
     const key = EncryptionManager.generateKey("aes-256");
 
     // 服务端启用加密
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       encryption: { key },
     });
@@ -1156,6 +1155,7 @@ describe("WebSocket 加密 - 混合场景", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     // 客户端不启用加密
     const client = new Client({
@@ -1200,11 +1200,10 @@ describe("WebSocket 加密 - 混合场景", () => {
 
 describe("WebSocket 加密 - 性能测试", () => {
   it("应该能够处理大量加密消息", async () => {
-    const testPort = getAvailablePort();
     const key = EncryptionManager.generateKey("aes-256");
 
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       encryption: { key },
     });
@@ -1219,6 +1218,7 @@ describe("WebSocket 加密 - 性能测试", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const client = new Client({
       url: `ws://localhost:${testPort}/ws`,
@@ -1377,12 +1377,11 @@ describe("WebSocket 加密 - 边界情况", () => {
 
   describe("错误处理", () => {
     it("应该正确处理解密失败的消息（密钥不匹配）", async () => {
-      const testPort = getAvailablePort();
       const serverKey = EncryptionManager.generateKey("aes-256");
       const clientKey = EncryptionManager.generateKey("aes-256"); // 不同的密钥
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key: serverKey },
       });
@@ -1402,6 +1401,7 @@ describe("WebSocket 加密 - 边界情况", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -1458,11 +1458,10 @@ describe("WebSocket 加密 - 边界情况", () => {
 
   describe("二进制消息与加密", () => {
     it("二进制消息不应该被加密（客户端）", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -1478,6 +1477,7 @@ describe("WebSocket 加密 - 边界情况", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
@@ -1532,11 +1532,10 @@ describe("WebSocket 加密 - 边界情况", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it("二进制消息不应该被加密（服务端）", async () => {
-      const testPort = getAvailablePort();
       const key = EncryptionManager.generateKey("aes-256");
 
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         encryption: { key },
       });
@@ -1551,6 +1550,7 @@ describe("WebSocket 加密 - 边界情况", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const client = new Client({
         url: `ws://localhost:${testPort}/ws`,
