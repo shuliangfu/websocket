@@ -16,7 +16,6 @@ import type { Socket } from "../src/socket.ts";
 import {
   createWebSocketClient,
   delay,
-  getAvailablePort,
   waitForEvent,
   waitForMessage,
 } from "./test-utils.ts";
@@ -212,7 +211,7 @@ describe("BatchHeartbeatManager 批量心跳管理器", () => {
 describe("Server getStats 统计信息", () => {
   it("应包含 messageQueue 和 messageCache 统计", () => {
     const server = new Server({
-      port: getAvailablePort(),
+      port: 0,
       path: "/ws",
       messageCache: { maxSize: 100, ttl: 60000 },
       messageQueue: { maxSize: 200, batchSize: 20, processInterval: 5 },
@@ -227,7 +226,7 @@ describe("Server getStats 统计信息", () => {
 
   it("禁用 messageCache 时不应包含 messageCache 统计", () => {
     const server = new Server({
-      port: getAvailablePort(),
+      port: 0,
       path: "/ws",
       messageCache: false,
     });
@@ -237,7 +236,7 @@ describe("Server getStats 统计信息", () => {
 
   it("禁用 messageQueue 时不应包含 messageQueue 统计", () => {
     const server = new Server({
-      port: getAvailablePort(),
+      port: 0,
       path: "/ws",
       messageQueue: false,
     });
@@ -249,9 +248,8 @@ describe("Server getStats 统计信息", () => {
 // ========== useMessageQueue 广播入队 ==========
 describe("useMessageQueue 广播通过消息队列", () => {
   it("useMessageQueue=true 时 broadcast 应通过队列发送", async () => {
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       useMessageQueue: true,
       messageQueue: { maxSize: 1000, batchSize: 50, processInterval: 5 },
@@ -261,6 +259,7 @@ describe("useMessageQueue 广播通过消息队列", () => {
 
     await server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(`ws://localhost:${testPort}/ws`);
     await delay(300);
@@ -289,9 +288,8 @@ describe("useMessageQueue 广播通过消息队列", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("useMessageQueue=true 时 emitToRoom 应通过队列发送", async () => {
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       useMessageQueue: true,
       messageQueue: { maxSize: 1000, batchSize: 50, processInterval: 5 },
@@ -303,6 +301,7 @@ describe("useMessageQueue 广播通过消息队列", () => {
 
     await server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(`ws://localhost:${testPort}/ws`);
     await delay(300);

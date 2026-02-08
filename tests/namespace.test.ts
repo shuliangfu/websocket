@@ -5,11 +5,7 @@
 
 import { describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 describe("WebSocket 命名空间", () => {
   it("应该支持创建命名空间", () => {
@@ -29,8 +25,7 @@ describe("WebSocket 命名空间", () => {
   });
 
   it("应该支持命名空间连接", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort });
+    const server = new Server({ port: 0 });
     let connected = false;
 
     const adminNamespace = server.of("/admin");
@@ -41,6 +36,7 @@ describe("WebSocket 命名空间", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     // 连接到命名空间
     const ws = await createWebSocketClient(
@@ -57,8 +53,7 @@ describe("WebSocket 命名空间", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持命名空间中间件", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort });
+    const server = new Server({ port: 0 });
     let middlewareCalled = false;
     let connected = false;
 
@@ -74,6 +69,7 @@ describe("WebSocket 命名空间", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/admin`,
@@ -93,8 +89,7 @@ describe("WebSocket 命名空间", () => {
   }, { sanitizeOps: false, sanitizeResources: false });
 
   it("应该支持多个命名空间", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort });
+    const server = new Server({ port: 0 });
     let adminConnected = false;
     let userConnected = false;
 
@@ -110,6 +105,7 @@ describe("WebSocket 命名空间", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     // 连接到 admin 命名空间
     const ws1 = await createWebSocketClient(
@@ -159,8 +155,7 @@ describe("WebSocket 命名空间", () => {
   });
 
   it("应该支持命名空间隔离", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort });
+    const server = new Server({ port: 0 });
     let adminMessageReceived = false;
     let userMessageReceived = false;
 
@@ -180,6 +175,7 @@ describe("WebSocket 命名空间", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     // 连接到 admin 命名空间并发送消息
     const ws1 = await createWebSocketClient(

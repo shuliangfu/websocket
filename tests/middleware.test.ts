@@ -13,11 +13,7 @@ import {
   rateLimitMiddleware,
   Server,
 } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 const isWindows = platform() === "windows";
 
@@ -60,8 +56,7 @@ describe("WebSocket Server 中间件", () => {
 
   describe("内置中间件 - authMiddleware", () => {
     it.skipIf(isWindows, "应该支持认证中间件（通过）", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connected = false;
 
       server.use(
@@ -78,6 +73,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws?token=valid-token`,
@@ -93,8 +89,7 @@ describe("WebSocket Server 中间件", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it.skipIf(isWindows, "应该支持认证中间件（拒绝）", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connected = false;
 
       server.use(
@@ -110,6 +105,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       try {
         const ws = await createWebSocketClient(
@@ -128,8 +124,7 @@ describe("WebSocket Server 中间件", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it.skipIf(isWindows, "应该支持异步认证中间件", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connected = false;
 
       server.use(
@@ -146,6 +141,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws?token=valid-token`,
@@ -163,8 +159,7 @@ describe("WebSocket Server 中间件", () => {
 
   describe("内置中间件 - loggerMiddleware", () => {
     it.skipIf(isWindows, "应该支持日志中间件", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connected = false;
 
       server.use(loggerMiddleware());
@@ -175,6 +170,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,
@@ -192,8 +188,7 @@ describe("WebSocket Server 中间件", () => {
 
   describe("内置中间件 - rateLimitMiddleware", () => {
     it.skipIf(isWindows, "应该支持连接数限制", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connectionCount = 0;
 
       server.use(
@@ -208,6 +203,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       // 第一个连接应该成功
       const ws1 = await createWebSocketClient(
@@ -236,8 +232,7 @@ describe("WebSocket Server 中间件", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it.skipIf(isWindows, "应该支持消息频率限制", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let messageCount = 0;
 
       server.use(
@@ -254,6 +249,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,
@@ -282,8 +278,7 @@ describe("WebSocket Server 中间件", () => {
 
   describe("内置中间件 - corsMiddleware", () => {
     it.skipIf(isWindows, "应该支持 CORS 中间件（允许）", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
       let connected = false;
 
       server.use(
@@ -298,6 +293,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       // 注意：WebSocket 客户端可能不发送 Origin 头
       // 这个测试主要验证中间件不会崩溃
@@ -313,8 +309,7 @@ describe("WebSocket Server 中间件", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it.skipIf(isWindows, "应该支持 CORS 中间件（函数验证）", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
 
       server.use(
         corsMiddleware({
@@ -324,6 +319,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,
@@ -337,8 +333,7 @@ describe("WebSocket Server 中间件", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
 
     it.skipIf(isWindows, "应该支持 CORS 中间件（数组验证）", async () => {
-      const testPort = getAvailablePort();
-      const server = new Server({ port: testPort, path: "/ws" });
+      const server = new Server({ port: 0, path: "/ws" });
 
       server.use(
         corsMiddleware({
@@ -348,6 +343,7 @@ describe("WebSocket Server 中间件", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,

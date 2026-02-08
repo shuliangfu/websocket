@@ -13,11 +13,7 @@ import {
   loggerMiddleware,
   Server,
 } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 const isWindows = platform() === "windows";
 
@@ -72,9 +68,8 @@ describe("Server logger、debug、t 参数", () => {
   describe("debug 参数", () => {
     it.skipIf(isWindows, "debug=true 时应在收到请求时调用 logger.debug", async () => {
       const mockLogger = createMockLogger();
-      const testPort = getAvailablePort();
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         debug: true,
         logger: mockLogger as unknown as Logger,
@@ -82,6 +77,7 @@ describe("Server logger、debug、t 参数", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       // 建立 WebSocket 连接会触发 handleRequest，进而调用 debugLog
       const ws = await createWebSocketClient(
@@ -106,9 +102,8 @@ describe("Server logger、debug、t 参数", () => {
 
     it.skipIf(isWindows, "debug=false 时不应调用 logger.debug", async () => {
       const mockLogger = createMockLogger();
-      const testPort = getAvailablePort();
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         debug: false,
         logger: mockLogger as unknown as Logger,
@@ -116,6 +111,7 @@ describe("Server logger、debug、t 参数", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,
@@ -148,9 +144,8 @@ describe("Server logger、debug、t 参数", () => {
         return undefined;
       };
 
-      const testPort = getAvailablePort();
       const server = new Server({
-        port: testPort,
+        port: 0,
         path: "/ws",
         debug: true,
         logger: mockLogger as unknown as Logger,
@@ -159,6 +154,7 @@ describe("Server logger、debug、t 参数", () => {
 
       server.listen();
       await delay(200);
+      const testPort = server.getPort();
 
       const ws = await createWebSocketClient(
         `ws://localhost:${testPort}/ws`,
@@ -220,12 +216,12 @@ describe("Server logger、debug、t 参数", () => {
 describe("loggerMiddleware logger、t 参数", () => {
   it.skipIf(isWindows, "应使用传入的自定义 logger 记录连接日志", async () => {
     const mockLogger = createMockLogger();
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.use(loggerMiddleware(mockLogger as unknown as Logger));
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -254,9 +250,8 @@ describe("loggerMiddleware logger、t 参数", () => {
       return undefined;
     };
 
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       t: customT,
     });
@@ -264,6 +259,7 @@ describe("loggerMiddleware logger、t 参数", () => {
     server.use(loggerMiddleware(mockLogger as unknown as Logger));
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
@@ -308,9 +304,8 @@ describe("authMiddleware t 翻译参数", () => {
       return undefined;
     };
 
-    const testPort = getAvailablePort();
     const server = new Server({
-      port: testPort,
+      port: 0,
       path: "/ws",
       t: customT,
     });

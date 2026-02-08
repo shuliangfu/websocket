@@ -5,16 +5,11 @@
 
 import { describe, expect, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  getAvailablePort,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay } from "./test-utils.ts";
 
 describe("Socket 数据存储", () => {
   it("应该支持数据存储", async () => {
-    const testPort = getAvailablePort();
-    const server = new Server({ port: testPort, path: "/ws" });
+    const server = new Server({ port: 0, path: "/ws" });
 
     server.on("connection", (socket) => {
       socket.data.userId = "user123";
@@ -26,6 +21,7 @@ describe("Socket 数据存储", () => {
 
     server.listen();
     await delay(200);
+    const testPort = server.getPort();
 
     const ws = await createWebSocketClient(
       `ws://localhost:${testPort}/ws`,
