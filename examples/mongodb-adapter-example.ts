@@ -21,7 +21,7 @@
  * PORT=8081 deno run --allow-net --allow-env examples/mongodb-adapter-example.ts
  */
 
-import { Server, MongoDBAdapter } from "../src/mod.ts";
+import { MongoDBAdapter, Server } from "../src/mod.ts";
 
 // 从环境变量获取端口，默认 8080
 const port = parseInt(Deno.env.get("PORT") || "8080");
@@ -64,7 +64,9 @@ const io = new Server({
 
 console.log(`[MongoDB 适配器示例] 服务器启动在端口 ${port}`);
 console.log(`[MongoDB 适配器示例] WebSocket 地址: ws://localhost:${port}/ws`);
-console.log(`[MongoDB 适配器示例] MongoDB 连接: ${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.database}`);
+console.log(
+  `[MongoDB 适配器示例] MongoDB 连接: ${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.database}`,
+);
 
 // 监听连接事件
 io.on("connection", (socket) => {
@@ -165,22 +167,25 @@ io.on("connection", (socket) => {
    * 批量房间消息
    * 客户端发送: socket.emit("batch-room-message", { rooms: ["room-1", "room-2"], message: "Hello" })
    */
-  socket.on("batch-room-message", (data: { rooms: string[]; message: string }) => {
-    const { rooms, message } = data;
-    console.log(
-      `[服务器 ${port}] 用户 ${socket.id} 向多个房间发送消息:`,
-      rooms,
-      message,
-    );
+  socket.on(
+    "batch-room-message",
+    (data: { rooms: string[]; message: string }) => {
+      const { rooms, message } = data;
+      console.log(
+        `[服务器 ${port}] 用户 ${socket.id} 向多个房间发送消息:`,
+        rooms,
+        message,
+      );
 
-    // 使用批量发送方法
-    io.batchEmitToRooms(rooms, "room-message", {
-      userId: socket.id,
-      message: message,
-      serverPort: port,
-      timestamp: Date.now(),
-    });
-  });
+      // 使用批量发送方法
+      io.batchEmitToRooms(rooms, "room-message", {
+        userId: socket.id,
+        message: message,
+        serverPort: port,
+        timestamp: Date.now(),
+      });
+    },
+  );
 
   /**
    * 获取服务器统计信息
@@ -212,9 +217,13 @@ io.on("connection", (socket) => {
 io.listen().then(() => {
   console.log(`[MongoDB 适配器示例] 服务器已启动`);
   console.log(`[MongoDB 适配器示例] 可以启动多个实例测试分布式功能`);
-  console.log(`[MongoDB 适配器示例] 使用不同端口: PORT=8081 deno run --allow-net --allow-env examples/mongodb-adapter-example.ts`);
+  console.log(
+    `[MongoDB 适配器示例] 使用不同端口: PORT=8081 deno run --allow-net --allow-env examples/mongodb-adapter-example.ts`,
+  );
   console.log(`[MongoDB 适配器示例] 注意：`);
-  console.log(`[MongoDB 适配器示例] - 副本集模式：使用 Change Streams，实时性好（推荐）`);
+  console.log(
+    `[MongoDB 适配器示例] - 副本集模式：使用 Change Streams，实时性好（推荐）`,
+  );
   console.log(`[MongoDB 适配器示例] - 单节点模式：自动降级到轮询，500ms 延迟`);
 }).catch((error) => {
   console.error(`[MongoDB 适配器示例] 服务器启动失败:`, error);

@@ -35,9 +35,7 @@ async function binaryMessageExample() {
       console.log(`[服务端] 收到二进制消息`);
       console.log(`[服务端] 数据类型: ${data.constructor.name}`);
       console.log(`[服务端] 数据长度: ${data.byteLength || data.length} 字节`);
-      receivedBinary = data instanceof Uint8Array
-        ? data
-        : new Uint8Array(data);
+      receivedBinary = data instanceof Uint8Array ? data : new Uint8Array(data);
 
       // 验证数据内容
       const expected = new Uint8Array([1, 2, 3, 4, 5]);
@@ -91,9 +89,7 @@ async function binaryMessageExample() {
   client.on("binary", async (data: any) => {
     console.log(`[客户端] 收到二进制消息`);
     console.log(`[客户端] 数据类型: ${data.constructor.name}`);
-    receivedResponse = data instanceof Uint8Array
-      ? data
-      : new Uint8Array(data);
+    receivedResponse = data instanceof Uint8Array ? data : new Uint8Array(data);
 
     const expected = new Uint8Array([10, 20, 30, 40, 50]);
     const matches = receivedResponse.length === expected.length &&
@@ -231,9 +227,7 @@ async function fileTransferExample() {
     // 接收文件数据（二进制，不加密）
     socket.on("binary", (data: any) => {
       console.log(`[服务端] 收到文件数据（二进制，不加密）`);
-      fileData = data instanceof Uint8Array
-        ? data
-        : new Uint8Array(data);
+      fileData = data instanceof Uint8Array ? data : new Uint8Array(data);
       console.log(`[服务端] 文件大小: ${fileData.length} 字节`);
 
       // 验证文件
@@ -269,7 +263,9 @@ async function fileTransferExample() {
     console.log("[客户端] 已连接");
 
     // 模拟文件数据
-    const fileContent = new TextEncoder().encode("Hello, World! This is a test file.");
+    const fileContent = new TextEncoder().encode(
+      "Hello, World! This is a test file.",
+    );
     const fileName = "test.txt";
     const fileType = "text/plain";
 

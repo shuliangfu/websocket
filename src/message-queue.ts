@@ -22,7 +22,10 @@ interface QueueItem {
 /**
  * 错误回调类型（用于统一错误处理）
  */
-export type MessageQueueErrorHandler = (message: string, error: unknown) => void;
+export type MessageQueueErrorHandler = (
+  message: string,
+  error: unknown,
+) => void;
 
 /**
  * 消息队列管理器
@@ -171,7 +174,9 @@ export class MessageQueue {
 
       // 如果还有消息，等待一段时间再处理（让出事件循环）
       if (this.queue.length > 0) {
-        await new Promise((resolve) => setTimeout(resolve, this.processInterval));
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.processInterval)
+        );
       }
     }
 

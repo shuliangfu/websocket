@@ -39,14 +39,8 @@ export interface ServerOptions {
   logger?: import("@dreamer/logger").Logger;
   /** 是否启用调试日志（默认：false），开启后通过 logger.debug 输出 WebSocket 请求路径、握手等调试信息 */
   debug?: boolean;
-  /**
-   * 翻译函数（可选，用于 i18n）
-   * 传入时，debug 日志将使用 t(key, params) 获取翻译；未传入时使用默认中文
-   */
-  t?: (
-    key: string,
-    params?: Record<string, string | number | boolean>,
-  ) => string | undefined;
+  /** 语言（可选），用于日志与错误文案；未传时由环境变量 LANGUAGE/LC_ALL/LANG 检测 */
+  lang?: "en-US" | "zh-CN";
   /** 加密配置（可选，启用后服务端会自动解密消息） */
   encryption?: EncryptionConfig;
   /** 分布式适配器（可选，用于多服务器实例） */

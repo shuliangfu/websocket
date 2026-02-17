@@ -5,11 +5,7 @@
 
 import { describe, expect, it } from "@dreamer/test";
 import { Server, Socket } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  waitForMessage,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay, waitForMessage } from "./test-utils.ts";
 
 describe("Socket 房间管理", () => {
   it("应该支持加入房间", async () => {

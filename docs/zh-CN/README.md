@@ -1,18 +1,19 @@
 # @dreamer/websocket
 
-> 一个兼容 Deno 和 Bun 的 WebSocket 工具库，提供 WebSocket 服务器功能，支持实时双向通信
+> 一个兼容 Deno 和 Bun 的 WebSocket 工具包，提供 WebSocket
+> 服务器功能，支持实时双向通信
 
-[English](./README.md) | 中文 (Chinese)
+[English](../en-US/README.md) · 中文 (Chinese)
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Tests](https://img.shields.io/badge/tests-156%20passed-brightgreen)](./TEST_REPORT.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../../LICENSE)
+[![Tests](https://img.shields.io/badge/tests-172%20passed-brightgreen)](./TEST_REPORT.md)
 
 ---
 
 ## 🎯 功能
 
-WebSocket 工具库，用于构建实时通信应用、推送服务、在线协作等场景。
+WebSocket 工具包，用于构建实时通信应用、推送服务、在线协作等场景。
 
 ---
 
@@ -77,12 +78,13 @@ WebSocket 工具库，用于构建实时通信应用、推送服务、在线协�
 
 ## 🎨 设计原则
 
-**所有 @dreamer/* 库都遵循以下原则**：
+__所有 @dreamer/_ 包都遵循以下原则_*：
 
 - **主包（@dreamer/xxx）**：用于服务端（兼容 Deno 和 Bun 运行时）
 - **客户端子包（@dreamer/xxx/client）**：用于客户端（浏览器环境）
 
 这样可以：
+
 - 明确区分服务端和客户端代码
 - 避免在客户端代码中引入服务端依赖
 - 提供更好的类型安全和代码提示
@@ -118,13 +120,13 @@ bunx jsr add @dreamer/websocket
 
 ## 🌍 环境兼容性
 
-| 环境 | 版本要求 | 状态 |
-|------|---------|------|
-| **Deno** | 2.5+ | ✅ 完全支持 |
-| **Bun** | 1.0+ | ✅ 完全支持 |
-| **服务端** | - | ✅ 支持（兼容 Deno 和 Bun 运行时，WebSocket 服务器功能） |
-| **客户端** | - | ✅ 支持（浏览器环境，通过 `jsr:@dreamer/websocket/client` 使用 WebSocket 客户端功能） |
-| **依赖** | - | 📦 @dreamer/runtime-adapter（用于跨运行时兼容） |
+| 环境       | 版本要求 | 状态                                                                                  |
+| ---------- | -------- | ------------------------------------------------------------------------------------- |
+| **Deno**   | 2.5+     | ✅ 完全支持                                                                           |
+| **Bun**    | 1.0+     | ✅ 完全支持                                                                           |
+| **服务端** | -        | ✅ 支持（兼容 Deno 和 Bun 运行时，WebSocket 服务器功能）                              |
+| **客户端** | -        | ✅ 支持（浏览器环境，通过 `jsr:@dreamer/websocket/client` 使用 WebSocket 客户端功能） |
+| **依赖**   | -        | 📦 @dreamer/runtime-adapter（用于跨运行时兼容）                                       |
 
 ---
 
@@ -175,7 +177,11 @@ console.log("WebSocket 服务器运行在 ws://localhost:8080/ws");
 ### 使用中间件
 
 ```typescript
-import { Server, authMiddleware, loggerMiddleware } from "jsr:@dreamer/websocket";
+import {
+  authMiddleware,
+  loggerMiddleware,
+  Server,
+} from "jsr:@dreamer/websocket";
 
 const io = new Server({
   port: 8080,
@@ -191,7 +197,7 @@ io.use(
     }
     socket.data.user = await getUserByToken(token);
     return true;
-  })
+  }),
 );
 
 // 日志中间件
@@ -306,7 +312,7 @@ gameNamespace.on("connection", (socket) => {
 ### 消息加密
 
 ```typescript
-import { Server, EncryptionManager } from "jsr:@dreamer/websocket";
+import { EncryptionManager, Server } from "jsr:@dreamer/websocket";
 
 // 生成密钥
 const key = EncryptionManager.generateKey("aes-256");
@@ -339,7 +345,7 @@ const io = new Server({
   port: 8080,
   path: "/ws",
   // 心跳配置
-  pingTimeout: 60000,  // 60 秒无响应则断开连接
+  pingTimeout: 60000, // 60 秒无响应则断开连接
   pingInterval: 30000, // 30 秒发送一次心跳
   // 可选：大量连接时使用批量心跳，减少定时器数量
   // useBatchHeartbeat: true,
@@ -391,17 +397,20 @@ client.on("disconnect", (reason) => {
 
 ### 分布式部署（适配器）
 
-当需要部署多个 WebSocket 服务器实例时，需要使用分布式适配器来实现服务器间的消息同步。适配器负责：
+当需要部署多个 WebSocket
+服务器实例时，需要使用分布式适配器来实现服务器间的消息同步。适配器负责：
+
 - **消息广播**：将消息广播到所有服务器实例
 - **房间管理**：同步房间成员信息
 - **服务器发现**：自动注册和发现服务器实例
 
-默认情况下，服务器使用内存适配器（单服务器模式）。对于多服务器部署，需要配置 Redis 或 MongoDB 适配器。
+默认情况下，服务器使用内存适配器（单服务器模式）。对于多服务器部署，需要配置
+Redis 或 MongoDB 适配器。
 
 #### Redis 适配器
 
 ```typescript
-import { Server, RedisAdapter } from "jsr:@dreamer/websocket";
+import { RedisAdapter, Server } from "jsr:@dreamer/websocket";
 
 // 创建使用 Redis 适配器的服务器
 const io = new Server({
@@ -430,7 +439,7 @@ io.listen();
 #### MongoDB 适配器
 
 ```typescript
-import { Server, MongoDBAdapter } from "jsr:@dreamer/websocket";
+import { MongoDBAdapter, Server } from "jsr:@dreamer/websocket";
 
 // 创建使用 MongoDB 适配器的服务器
 const io = new Server({
@@ -495,6 +504,7 @@ io.listen();
 ```
 
 **适配器选择建议**：
+
 - **单服务器**：无需配置适配器，使用默认内存适配器
 - **多服务器 + Redis**：推荐使用 Redis 适配器，性能好，延迟低
 - **多服务器 + MongoDB**：如果已有 MongoDB 基础设施，可使用 MongoDB 适配器
@@ -510,11 +520,13 @@ io.listen();
 WebSocket 服务器类，管理所有连接和事件。
 
 **构造函数**：
+
 ```typescript
 new Server(options?: ServerOptions)
 ```
 
 **选项**：
+
 - `host?: string`: 主机地址（默认：0.0.0.0）
 - `port?: number`: 端口号
 - `path?: string`: WebSocket 路径（默认："/"）
@@ -527,11 +539,13 @@ new Server(options?: ServerOptions)
 - `encryption?: EncryptionConfig`: 加密配置
 - `adapter?: WebSocketAdapter`: 分布式适配器（Redis、MongoDB 或 Memory）
 - `messageCache?: { maxSize?, ttl? } | false`: 消息序列化缓存配置（默认启用）
-- `messageQueue?: { maxSize?, batchSize?, processInterval? } | false`: 消息队列配置（默认启用）
+- `messageQueue?: { maxSize?, batchSize?, processInterval? } | false`:
+  消息队列配置（默认启用）
 - `useBatchHeartbeat?: boolean`: 是否使用批量心跳（默认：false）
 - `useMessageQueue?: boolean`: 广播是否通过消息队列发送（默认：false）
 
 **方法**：
+
 - `listen(host?: string, port?: number): void`: 启动服务器
 - `close(): Promise<void>`: 关闭服务器
 - `on(event: "connection", listener: ServerEventListener): void`: 监听连接事件
@@ -544,6 +558,7 @@ new Server(options?: ServerOptions)
 WebSocket 连接类，表示一个客户端连接。
 
 **方法**：
+
 - `emit(event: string, data?: any, callback?: Function): void`: 发送事件
 - `on(event: string, listener: SocketEventListener): void`: 监听事件
 - `off(event: string, listener?: SocketEventListener): void`: 移除监听器
@@ -555,6 +570,7 @@ WebSocket 连接类，表示一个客户端连接。
 - `sendBinary(data: ArrayBuffer | Blob): void`: 发送二进制消息
 
 **属性**：
+
 - `id: string`: Socket 唯一标识
 - `handshake: Handshake`: 握手信息
 - `data: SocketData`: 数据存储对象
@@ -565,11 +581,13 @@ WebSocket 连接类，表示一个客户端连接。
 WebSocket 客户端类，用于浏览器环境。
 
 **构造函数**：
+
 ```typescript
 new Client(options: ClientOptions)
 ```
 
 **选项**：
+
 - `url: string`: WebSocket 服务器 URL
 - `autoReconnect?: boolean`: 自动重连（默认：true）
 - `reconnectInterval?: number`: 重连间隔（默认：1000ms）
@@ -582,6 +600,7 @@ new Client(options: ClientOptions)
 - `encryption?: EncryptionConfig`: 加密配置
 
 **方法**：
+
 - `connect(): void`: 连接服务器
 - `disconnect(): void`: 断开连接
 - `emit(event: string, data?: any, callback?: Function): void`: 发送事件
@@ -594,10 +613,13 @@ new Client(options: ClientOptions)
 消息加密管理器，提供消息加密和解密功能。
 
 **静态方法**：
+
 - `generateKey(type: "aes-256" | "aes-128"): Uint8Array`: 生成随机密钥
-- `deriveKeyFromPassword(password: string, type: "aes-256" | "aes-128"): Uint8Array`: 从密码派生密钥
+- `deriveKeyFromPassword(password: string, type: "aes-256" | "aes-128"): Uint8Array`:
+  从密码派生密钥
 
 **方法**：
+
 - `encryptMessage(plaintext: string): Promise<string>`: 加密消息
 - `decryptMessage(ciphertext: string): Promise<string>`: 解密消息
 - `isEncrypted(message: string): boolean`: 判断消息是否已加密
@@ -606,10 +628,13 @@ new Client(options: ClientOptions)
 
 内置中间件函数：
 
-- `authMiddleware(validator: (socket: Socket) => boolean | Promise<boolean>): Middleware`: 认证中间件
+- `authMiddleware(validator: (socket: Socket) => boolean | Promise<boolean>): Middleware`:
+  认证中间件
 - `loggerMiddleware(logger?: Logger): Middleware`: 日志中间件
-- `rateLimitMiddleware(options: { maxConnections?: number; maxMessagesPerSecond?: number }): Middleware`: 限流中间件
-- `corsMiddleware(options: { origin?: string | string[] | ((origin: string) => boolean) }): Middleware`: CORS 中间件
+- `rateLimitMiddleware(options: { maxConnections?: number; maxMessagesPerSecond?: number }): Middleware`:
+  限流中间件
+- `corsMiddleware(options: { origin?: string | string[] | ((origin: string) => boolean) }): Middleware`:
+  CORS 中间件
 
 ### 分布式适配器
 
@@ -618,11 +643,13 @@ new Client(options: ClientOptions)
 Redis 分布式适配器，使用 Redis Pub/Sub 实现多服务器通信。
 
 **构造函数**：
+
 ```typescript
 new RedisAdapter(options: RedisAdapterOptions)
 ```
 
 **选项**：
+
 - `connection?: RedisConnectionConfig`: Redis 连接配置
   - `host?: string`: 主机地址（默认："127.0.0.1"）
   - `port?: number`: 端口号（默认：6379）
@@ -631,6 +658,7 @@ new RedisAdapter(options: RedisAdapterOptions)
 - `heartbeatInterval?: number`: 心跳间隔（秒，默认：5）
 
 **示例**：
+
 ```typescript
 import { RedisAdapter } from "jsr:@dreamer/websocket";
 
@@ -649,11 +677,13 @@ const adapter = new RedisAdapter({
 MongoDB 分布式适配器，使用 Change Streams 或轮询实现多服务器通信。
 
 **构造函数**：
+
 ```typescript
 new MongoDBAdapter(options: MongoDBAdapterOptions)
 ```
 
 **选项**：
+
 - `connection: MongoDBConnectionConfig`: MongoDB 连接配置
   - `url?: string`: MongoDB 连接 URL
   - `host?: string`: 主机地址
@@ -667,6 +697,7 @@ new MongoDBAdapter(options: MongoDBAdapterOptions)
 - `heartbeatInterval?: number`: 心跳间隔（秒，默认：5）
 
 **示例**：
+
 ```typescript
 import { MongoDBAdapter } from "jsr:@dreamer/websocket";
 
@@ -696,6 +727,7 @@ const adapter = new MongoDBAdapter({
 ```
 
 **说明**：
+
 - **Change Streams**：需要 MongoDB 副本集，提供实时消息订阅（推荐）
 - **轮询降级**：单节点模式下自动使用 500ms 轮询间隔
 - **单节点副本集**：支持将单节点配置为副本集，启用 Change Streams
@@ -710,36 +742,37 @@ const adapter = new MongoDBAdapter({
 - **连接池管理**：高效的连接池管理，支持大量并发连接
 - **异步操作**：所有操作都是异步的，不阻塞主线程
 - **MessageCache**：消息序列化缓存，FNV-1a 快速哈希，LRU 驱逐
-- **MessageQueue**：`useMessageQueue=true` 时 broadcast/emitToRoom 入队发送，提供背压
-- **BatchHeartbeatManager**：`useBatchHeartbeat=true` 时集中管理心跳，减少定时器数量
+- **MessageQueue**：`useMessageQueue=true` 时 broadcast/emitToRoom
+  入队发送，提供背压
+- **BatchHeartbeatManager**：`useBatchHeartbeat=true`
+  时集中管理心跳，减少定时器数量
 - **批量发送**：大量连接时自动分批发送消息，避免阻塞
 - **加密缓存**：缓存加密结果，避免重复加密
 - **分布式优化**：支持 Redis 和 MongoDB 分布式部署，实现水平扩展
 
-详细优化方案请参考 [OPTIMIZATION.md](./OPTIMIZATION.md) 和 [OPTIMIZATION_ANALYSIS.md](./OPTIMIZATION_ANALYSIS.md)
+详细优化方案请参考 [OPTIMIZATION.md](../../OPTIMIZATION.md) 和
+[OPTIMIZATION_ANALYSIS.md](../../OPTIMIZATION_ANALYSIS.md)
 
 ---
 
 ## 🌐 客户端支持
 
-WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
+WebSocket 客户端支持请查看 [client/README.md](./client/README.md)。
 
 ---
 
 ## 📋 变更日志
 
-| 版本 | 日期 | 变更 |
-|------|------|------|
-| [1.0.1](CHANGELOG-zh.md#101---2026-02-08) | 2026-02-08 | 修复：Windows CI 兼容性（port 0 + getPort） |
-| [1.0.0](CHANGELOG-zh.md#100---2026-02-06) | 2026-02-06 | 首个稳定版 |
+详见 [CHANGELOG.md](./CHANGELOG.md)。
 
-完整历史见 [CHANGELOG-zh.md](./CHANGELOG-zh.md)。
+**最新 (v1.0.2)**：许可证 Apache 2.0；ServerOptions 增加 `lang`（i18n）；文档
+拆分为 en-US/zh-CN；TEST_REPORT 中文翻译；172 个测试通过。
 
 ---
 
 ## 📊 测试
 
-- **测试数量**：156 个测试用例，全部通过
+- **测试数量**：172 个测试用例，全部通过
 - **测试报告**：详见 [TEST_REPORT.md](./TEST_REPORT.md)
 - **运行测试**：`deno test -A tests` 或 `bun test tests`
 
@@ -749,11 +782,13 @@ WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
 
 - **服务端和客户端分离**：通过 `/client` 子路径明确区分服务端和客户端代码
 - **统一接口**：服务端和客户端使用相同的 API 接口，降低学习成本
-- **类似 socket.io 的 API**：采用类似 socket.io 的 API 设计，提供更友好的开发体验
+- **类似 socket.io 的 API**：采用类似 socket.io 的 API
+  设计，提供更友好的开发体验
 - **消息加密**：内置消息加密功能，支持多种加密算法
 - **跨运行时支持**：原生支持 Deno 和 Bun 运行时，无需 Node.js
 - **类型安全**：完整的 TypeScript 类型支持
-- **与 @dreamer/http 配合使用**：可以在同一个应用中同时提供 HTTP 和 WebSocket 服务
+- **与 @dreamer/http 配合使用**：可以在同一个应用中同时提供 HTTP 和 WebSocket
+  服务
 
 ---
 
@@ -765,7 +800,7 @@ WebSocket 客户端支持请查看 [client/README.md](./src/client/README.md)。
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE.md](./LICENSE.md)
+Apache License 2.0 - 详见 [LICENSE](../../LICENSE)
 
 ---
 

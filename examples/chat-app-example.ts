@@ -79,43 +79,53 @@ io.on("connection", (socket) => {
    * 创建房间
    * 客户端发送: socket.emit("create-room", { name: "房间名", description: "描述" })
    */
-  socket.on("create-room", (data: { name: string; description?: string }, callback?: (result: any) => void) => {
-    const roomId = `room-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const room = {
-      id: roomId,
-      name: data.name,
-      description: data.description,
-      createdAt: Date.now(),
-      members: new Set<string>(),
-    };
+  socket.on(
+    "create-room",
+    (
+      data: { name: string; description?: string },
+      callback?: (result: any) => void,
+    ) => {
+      const roomId = `room-${Date.now()}-${
+        Math.random().toString(36).substr(2, 9)
+      }`;
+      const room = {
+        id: roomId,
+        name: data.name,
+        description: data.description,
+        createdAt: Date.now(),
+        members: new Set<string>(),
+      };
 
-    rooms.set(roomId, room);
-    room.members.add(user.id);
+      rooms.set(roomId, room);
+      room.members.add(user.id);
 
-    // 用户加入房间
-    socket.join(roomId);
-    const userData = users.get(user.id);
-    if (userData) {
-      userData.rooms.add(roomId);
-    }
+      // 用户加入房间
+      socket.join(roomId);
+      const userData = users.get(user.id);
+      if (userData) {
+        userData.rooms.add(roomId);
+      }
 
-    console.log(`[聊天应用] 用户 ${user.name} 创建房间: ${data.name} (${roomId})`);
+      console.log(
+        `[聊天应用] 用户 ${user.name} 创建房间: ${data.name} (${roomId})`,
+      );
 
-    // 通知房间内其他成员（这里只有创建者）
-    socket.to(roomId).emit("room-created", {
-      roomId: roomId,
-      roomName: data.name,
-      createdBy: user.id,
-    });
-
-    if (callback) {
-      callback({
-        success: true,
+      // 通知房间内其他成员（这里只有创建者）
+      socket.to(roomId).emit("room-created", {
         roomId: roomId,
         roomName: data.name,
+        createdBy: user.id,
       });
-    }
-  });
+
+      if (callback) {
+        callback({
+          success: true,
+          roomId: roomId,
+          roomName: data.name,
+        });
+      }
+    },
+  );
 
   /**
    * 加入房间
@@ -137,7 +147,9 @@ io.on("connection", (socket) => {
       userData.rooms.add(roomId);
     }
 
-    console.log(`[聊天应用] 用户 ${user.name} 加入房间: ${room.name} (${roomId})`);
+    console.log(
+      `[聊天应用] 用户 ${user.name} 加入房间: ${room.name} (${roomId})`,
+    );
 
     // 通知房间内其他成员
     socket.to(roomId).emit("user-joined-room", {
@@ -167,82 +179,95 @@ io.on("connection", (socket) => {
    * 离开房间
    * 客户端发送: socket.emit("leave-room", "room-123")
    */
-  socket.on("leave-room", (roomId: string, callback?: (result: any) => void) => {
-    const room = rooms.get(roomId);
-    if (!room) {
-      if (callback) {
-        callback({ success: false, message: "房间不存在" });
+  socket.on(
+    "leave-room",
+    (roomId: string, callback?: (result: any) => void) => {
+      const room = rooms.get(roomId);
+      if (!room) {
+        if (callback) {
+          callback({ success: false, message: "房间不存在" });
+        }
+        return;
       }
-      return;
-    }
 
-    socket.leave(roomId);
-    room.members.delete(user.id);
-    const userData = users.get(user.id);
-    if (userData) {
-      userData.rooms.delete(roomId);
-    }
+      socket.leave(roomId);
+      room.members.delete(user.id);
+      const userData = users.get(user.id);
+      if (userData) {
+        userData.rooms.delete(roomId);
+      }
 
-    console.log(`[聊天应用] 用户 ${user.name} 离开房间: ${room.name} (${roomId})`);
+      console.log(
+        `[聊天应用] 用户 ${user.name} 离开房间: ${room.name} (${roomId})`,
+      );
 
-    // 通知房间内其他成员
-    socket.to(roomId).emit("user-left-room", {
-      roomId: roomId,
-      userId: user.id,
-      userName: user.name,
-      timestamp: Date.now(),
-    });
+      // 通知房间内其他成员
+      socket.to(roomId).emit("user-left-room", {
+        roomId: roomId,
+        userId: user.id,
+        userName: user.name,
+        timestamp: Date.now(),
+      });
 
-    // 如果房间为空，删除房间
-    if (room.members.size === 0) {
-      rooms.delete(roomId);
-      console.log(`[聊天应用] 房间 ${room.name} (${roomId}) 已删除（无成员）`);
-    }
+      // 如果房间为空，删除房间
+      if (room.members.size === 0) {
+        rooms.delete(roomId);
+        console.log(
+          `[聊天应用] 房间 ${room.name} (${roomId}) 已删除（无成员）`,
+        );
+      }
 
-    if (callback) {
-      callback({ success: true, roomId: roomId });
-    }
-  });
+      if (callback) {
+        callback({ success: true, roomId: roomId });
+      }
+    },
+  );
 
   /**
    * 发送房间消息
    * 客户端发送: socket.emit("room-message", { roomId: "room-123", message: "Hello" })
    */
-  socket.on("room-message", (data: { roomId: string; message: string }, callback?: (result: any) => void) => {
-    const room = rooms.get(data.roomId);
-    if (!room) {
-      if (callback) {
-        callback({ success: false, message: "房间不存在" });
+  socket.on(
+    "room-message",
+    (
+      data: { roomId: string; message: string },
+      callback?: (result: any) => void,
+    ) => {
+      const room = rooms.get(data.roomId);
+      if (!room) {
+        if (callback) {
+          callback({ success: false, message: "房间不存在" });
+        }
+        return;
       }
-      return;
-    }
 
-    if (!room.members.has(user.id)) {
-      if (callback) {
-        callback({ success: false, message: "您不在该房间中" });
+      if (!room.members.has(user.id)) {
+        if (callback) {
+          callback({ success: false, message: "您不在该房间中" });
+        }
+        return;
       }
-      return;
-    }
 
-    const messageData = {
-      roomId: data.roomId,
-      userId: user.id,
-      userName: user.name,
-      message: data.message,
-      timestamp: Date.now(),
-    };
+      const messageData = {
+        roomId: data.roomId,
+        userId: user.id,
+        userName: user.name,
+        message: data.message,
+        timestamp: Date.now(),
+      };
 
-    console.log(
-      `[聊天应用] 用户 ${user.name} 在房间 ${room.name} 发送消息: ${data.message}`,
-    );
+      console.log(
+        `[聊天应用] 用户 ${user.name} 在房间 ${room.name} 发送消息: ${data.message}`,
+      );
 
-    // 向房间内所有成员（包括发送者）广播消息
-    socket.to(data.roomId).emit("room-message", messageData);
+      // 向房间内所有成员（包括发送者）广播消息
+      socket.to(data.roomId).emit("room-message", messageData);
 
-    if (callback) {
-      callback({ success: true, messageId: `msg-${Date.now()}` });
-    }
-  });
+      if (callback) {
+        callback({ success: true, messageId: `msg-${Date.now()}` });
+      }
+    },
+  );
 
   /**
    * 获取房间列表
@@ -312,7 +337,9 @@ io.on("connection", (socket) => {
           // 如果房间为空，删除房间
           if (room.members.size === 0) {
             rooms.delete(roomId);
-            console.log(`[聊天应用] 房间 ${room.name} (${roomId}) 已删除（无成员）`);
+            console.log(
+              `[聊天应用] 房间 ${room.name} (${roomId}) 已删除（无成员）`,
+            );
           }
         }
       }
@@ -325,4 +352,6 @@ io.on("connection", (socket) => {
 
 io.listen();
 console.log("✅ 聊天应用示例服务器运行在 ws://localhost:8080/ws");
-console.log("   测试连接: ws://localhost:8080/ws?userId=user-123&userName=测试用户");
+console.log(
+  "   测试连接: ws://localhost:8080/ws?userId=user-123&userName=测试用户",
+);

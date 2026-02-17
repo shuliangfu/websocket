@@ -8,11 +8,7 @@ import type { Logger } from "@dreamer/logger";
 import { platform } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
-import {
-  authMiddleware,
-  loggerMiddleware,
-  Server,
-} from "../src/mod.ts";
+import { authMiddleware, loggerMiddleware, Server } from "../src/mod.ts";
 import { createWebSocketClient, delay } from "./test-utils.ts";
 
 const isWindows = platform() === "windows";
@@ -66,39 +62,44 @@ describe("Server logger、debug、t 参数", () => {
   });
 
   describe("debug 参数", () => {
-    it.skipIf(isWindows, "debug=true 时应在收到请求时调用 logger.debug", async () => {
-      const mockLogger = createMockLogger();
-      const server = new Server({
-        port: 0,
-        path: "/ws",
-        debug: true,
-        logger: mockLogger as unknown as Logger,
-      });
+    it.skipIf(
+      isWindows,
+      "debug=true 时应在收到请求时调用 logger.debug",
+      async () => {
+        const mockLogger = createMockLogger();
+        const server = new Server({
+          port: 0,
+          path: "/ws",
+          debug: true,
+          logger: mockLogger as unknown as Logger,
+        });
 
-      server.listen();
-      await delay(200);
-      const testPort = server.getPort();
+        server.listen();
+        await delay(200);
+        const testPort = server.getPort();
 
-      // 建立 WebSocket 连接会触发 handleRequest，进而调用 debugLog
-      const ws = await createWebSocketClient(
-        `ws://localhost:${testPort}/ws`,
-      );
-      await delay(300);
+        // 建立 WebSocket 连接会触发 handleRequest，进而调用 debugLog
+        const ws = await createWebSocketClient(
+          `ws://localhost:${testPort}/ws`,
+        );
+        await delay(300);
 
-      // 验证 debug 被调用（应包含请求路径、升级等日志）
-      expect(mockLogger.debugCalls.length).toBeGreaterThan(0);
-      const hasRequestLog = mockLogger.debugCalls.some(
-        (msg) =>
-          msg.includes("path=") ||
-          msg.includes("请求") ||
-          msg.includes("升级"),
-      );
-      expect(hasRequestLog).toBe(true);
+        // 验证 debug 被调用（应包含请求路径、升级等日志）
+        expect(mockLogger.debugCalls.length).toBeGreaterThan(0);
+        const hasRequestLog = mockLogger.debugCalls.some(
+          (msg) =>
+            msg.includes("path=") ||
+            msg.includes("请求") ||
+            msg.includes("升级"),
+        );
+        expect(hasRequestLog).toBe(true);
 
-      ws.close();
-      await server.close();
-      await delay(100);
-    }, { sanitizeOps: false, sanitizeResources: false });
+        ws.close();
+        await server.close();
+        await delay(100);
+      },
+      { sanitizeOps: false, sanitizeResources: false },
+    );
 
     it.skipIf(isWindows, "debug=false 时不应调用 logger.debug", async () => {
       const mockLogger = createMockLogger();
@@ -126,86 +127,61 @@ describe("Server logger、debug、t 参数", () => {
     }, { sanitizeOps: false, sanitizeResources: false });
   });
 
-  describe("t 翻译参数", () => {
-    it.skipIf(isWindows, "传入 t 函数时 debug 日志应使用翻译结果", async () => {
-      const mockLogger = createMockLogger();
-      const tCalls: Array<{ key: string; params?: Record<string, string | number | boolean> }> = [];
-      const customT = (
-        key: string,
-        params?: Record<string, string | number | boolean>,
-      ) => {
-        tCalls.push({ key, params });
-        if (key === "log.websocket.requestReceived") {
-          return `[i18n] Request: ${params?.path}`;
-        }
-        if (key === "log.websocket.upgradeSuccess") {
-          return `[i18n] Upgrade OK: ${params?.socketId}`;
-        }
-        return undefined;
-      };
+  describe("lang 翻译参数", () => {
+    it.skipIf(
+      isWindows,
+      "lang=en-US 时 debug 日志应使用包内英文翻译",
+      async () => {
+        const mockLogger = createMockLogger();
 
-      const server = new Server({
-        port: 0,
-        path: "/ws",
-        debug: true,
-        logger: mockLogger as unknown as Logger,
-        t: customT,
-      });
+        const server = new Server({
+          port: 0,
+          path: "/ws",
+          debug: true,
+          logger: mockLogger as unknown as Logger,
+          lang: "en-US",
+        });
 
-      server.listen();
-      await delay(200);
-      const testPort = server.getPort();
+        server.listen();
+        await delay(200);
+        const testPort = server.getPort();
 
-      const ws = await createWebSocketClient(
-        `ws://localhost:${testPort}/ws`,
-      );
-      await delay(300);
+        const ws = await createWebSocketClient(
+          `ws://localhost:${testPort}/ws`,
+        );
+        await delay(300);
 
-      // 验证 t 被调用
-      expect(tCalls.length).toBeGreaterThan(0);
-      const hasRequestKey = tCalls.some(
-        (c) => c.key === "log.websocket.requestReceived",
-      );
-      expect(hasRequestKey).toBe(true);
+        expect(mockLogger.debugCalls.length).toBeGreaterThan(0);
+        const hasRequestLog = mockLogger.debugCalls.some(
+          (msg) => msg.includes("Request received") || msg.includes("path="),
+        );
+        expect(hasRequestLog).toBe(true);
 
-      // 验证 debug 输出使用了翻译结果（若 t 返回了值）
-      const hasI18nLog = mockLogger.debugCalls.some(
-        (msg) => msg.includes("[i18n]"),
-      );
-      expect(hasI18nLog).toBe(true);
+        ws.close();
+        await server.close();
+        await delay(100);
+      },
+      { sanitizeOps: false, sanitizeResources: false },
+    );
 
-      ws.close();
-      await server.close();
-      await delay(100);
-    }, { sanitizeOps: false, sanitizeResources: false });
-
-    it("server.tr 应使用 t 函数的返回值", () => {
-      const customT = (key: string) => {
-        if (key === "log.websocket.authFailed") return "Auth failed (en)";
-        return undefined;
-      };
+    it("server.tr 应使用包内 i18n 翻译（lang: en-US）", () => {
       const server = new Server({
         port: 8080,
-        t: customT,
+        lang: "en-US",
       });
 
-      // 通过 server.tr 间接测试（tr 内部调用 options.t）
       const result = (server as any).tr(
         "log.websocket.authFailed",
         "认证失败",
       );
-      expect(result).toBe("Auth failed (en)");
+      expect(result).toBe("Authentication failed");
     });
 
-    it("t 返回 key 或 undefined 时应使用 fallback", () => {
-      const customT = (key: string) => key; // 返回 key 本身视为未翻译
-      const server = new Server({
-        port: 8080,
-        t: customT,
-      });
+    it("key 无翻译时应使用 fallback", () => {
+      const server = new Server({ port: 8080, lang: "en-US" });
 
       const result = (server as any).tr(
-        "log.websocket.authFailed",
+        "some.unknown.key.not.in.locale",
         "认证失败",
       );
       expect(result).toBe("认证失败");
@@ -239,40 +215,38 @@ describe("loggerMiddleware logger、t 参数", () => {
     await delay(100);
   }, { sanitizeOps: false, sanitizeResources: false });
 
-  it.skipIf(isWindows, "loggerMiddleware 应使用 server.tr 进行翻译", async () => {
-    const mockLogger = createMockLogger();
-    const tCalls: string[] = [];
-    const customT = (key: string) => {
-      tCalls.push(key);
-      if (key === "log.websocket.connectionEstablished") {
-        return "Connection established (i18n)";
-      }
-      return undefined;
-    };
+  it.skipIf(
+    isWindows,
+    "loggerMiddleware 应使用 server.tr 进行翻译",
+    async () => {
+      const mockLogger = createMockLogger();
 
-    const server = new Server({
-      port: 0,
-      path: "/ws",
-      t: customT,
-    });
+      const server = new Server({
+        port: 0,
+        path: "/ws",
+        lang: "en-US",
+      });
 
-    server.use(loggerMiddleware(mockLogger as unknown as Logger));
-    server.listen();
-    await delay(200);
-    const testPort = server.getPort();
+      server.use(loggerMiddleware(mockLogger as unknown as Logger));
+      server.listen();
+      await delay(200);
+      const testPort = server.getPort();
 
-    const ws = await createWebSocketClient(
-      `ws://localhost:${testPort}/ws`,
-    );
-    await delay(300);
+      const ws = await createWebSocketClient(
+        `ws://localhost:${testPort}/ws`,
+      );
+      await delay(300);
 
-    expect(tCalls).toContain("log.websocket.connectionEstablished");
-    expect(mockLogger.infoCalls.some((m) => m.includes("(i18n)"))).toBe(true);
+      expect(
+        mockLogger.infoCalls.some((m) => m.includes("Connection established")),
+      ).toBe(true);
 
-    ws.close();
-    await server.close();
-    await delay(100);
-  }, { sanitizeOps: false, sanitizeResources: false });
+      ws.close();
+      await server.close();
+      await delay(100);
+    },
+    { sanitizeOps: false, sanitizeResources: false },
+  );
 });
 
 describe("适配器 t 翻译参数", () => {
@@ -297,39 +271,38 @@ describe("适配器 t 翻译参数", () => {
   });
 });
 
-describe("authMiddleware t 翻译参数", () => {
-  it.skipIf(isWindows, "认证失败时 authMiddleware 应使用 server.tr 翻译错误信息", async () => {
-    const customT = (key: string) => {
-      if (key === "log.websocket.authFailed") return "Authentication failed (en)";
-      return undefined;
-    };
+describe("authMiddleware lang 翻译参数", () => {
+  it.skipIf(
+    isWindows,
+    "认证失败时 authMiddleware 应使用 server.tr 翻译错误信息",
+    async () => {
+      const server = new Server({
+        port: 0,
+        path: "/ws",
+        lang: "en-US",
+      });
 
-    const server = new Server({
-      port: 0,
-      path: "/ws",
-      t: customT,
-    });
+      server.use(
+        authMiddleware((socket) => {
+          const token = socket.handshake.query.token;
+          return token === "valid";
+        }),
+      );
 
-    server.use(
-      authMiddleware((socket) => {
-        const token = socket.handshake.query.token;
-        return token === "valid";
-      }),
-    );
+      server.on("connection", () => {});
 
-    server.on("connection", () => {});
+      server.listen();
+      await delay(200);
 
-    server.listen();
-    await delay(200);
+      const trResult = (server as { tr: (k: string, f: string) => string }).tr(
+        "log.websocket.authFailed",
+        "认证失败",
+      );
+      expect(trResult).toBe("Authentication failed");
 
-    // 验证 server.tr 在传入 t 时返回翻译结果（authMiddleware 内部调用 server.tr）
-    const trResult = (server as { tr: (k: string, f: string) => string }).tr(
-      "log.websocket.authFailed",
-      "认证失败",
-    );
-    expect(trResult).toBe("Authentication failed (en)");
-
-    await server.close();
-    await delay(100);
-  }, { sanitizeOps: false, sanitizeResources: false });
+      await server.close();
+      await delay(100);
+    },
+    { sanitizeOps: false, sanitizeResources: false },
+  );
 });

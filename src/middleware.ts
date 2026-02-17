@@ -34,14 +34,12 @@ export function authMiddleware(
       }
     } catch (error) {
       next(
-        error instanceof Error
-          ? error
-          : new Error(
-            socket.getServer()?.tr?.(
-              "log.websocket.authError",
-              "认证错误",
-            ) ?? "认证错误",
-          ),
+        error instanceof Error ? error : new Error(
+          socket.getServer()?.tr?.(
+            "log.websocket.authError",
+            "认证错误",
+          ) ?? "认证错误",
+        ),
       );
     }
   };
@@ -59,12 +57,17 @@ export function loggerMiddleware(
   return (socket, next) => {
     const msg = socket.getServer()?.tr?.(
       "log.websocket.connectionEstablished",
-      `[WebSocket] 连接建立: ${socket.id} from ${socket.handshake.address || "unknown"}`,
+      `[WebSocket] 连接建立: ${socket.id} from ${
+        socket.handshake.address || "unknown"
+      }`,
       {
         socketId: socket.id,
         address: socket.handshake.address || "unknown",
       },
-    ) ?? `[WebSocket] 连接建立: ${socket.id} from ${socket.handshake.address || "unknown"}`;
+    ) ??
+      `[WebSocket] 连接建立: ${socket.id} from ${
+        socket.handshake.address || "unknown"
+      }`;
     logger.info(msg);
     next();
   };

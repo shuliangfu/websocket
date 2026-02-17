@@ -28,7 +28,10 @@ async function encryptedChatApp() {
   });
 
   // 用户会话管理
-  const userSessions = new Map<string, { username: string; socketId: string }>();
+  const userSessions = new Map<
+    string,
+    { username: string; socketId: string }
+  >();
   const chatRooms = new Map<string, Set<string>>(); // 房间名 -> Socket ID 集合
 
   server.on("connection", (socket) => {
@@ -108,7 +111,9 @@ async function encryptedChatApp() {
       };
 
       console.log(
-        `[服务器] ${session.username} 在房间 ${room || "general"} 发送消息: ${message}`,
+        `[服务器] ${session.username} 在房间 ${
+          room || "general"
+        } 发送消息: ${message}`,
       );
 
       // 广播到房间（所有消息都是加密的）

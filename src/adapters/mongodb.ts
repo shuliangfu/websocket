@@ -351,7 +351,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
   private async initializeCollections(): Promise<void> {
     if (!this.db) {
       throw new Error(
-        this.tr("log.adapterMongo.databaseNotConnected", "MongoDB 数据库未连接"),
+        this.tr(
+          "log.adapterMongo.databaseNotConnected",
+          "MongoDB 数据库未连接",
+        ),
       );
     }
 
@@ -650,7 +653,10 @@ export class MongoDBAdapter implements WebSocketAdapter {
             this.startPolling(callback);
           } else {
             console.error(
-              this.tr("log.adapterMongo.changeStreamsError", "MongoDB Change Streams 错误"),
+              this.tr(
+                "log.adapterMongo.changeStreamsError",
+                "MongoDB Change Streams 错误",
+              ),
               error,
             );
           }

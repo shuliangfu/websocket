@@ -5,7 +5,7 @@
 
 import type { Server } from "./server.ts";
 import type { Socket } from "./socket.ts";
-import type { ServerEventListener, Middleware } from "./types.ts";
+import type { Middleware, ServerEventListener } from "./types.ts";
 
 /** 翻译函数类型 */
 type TrFn = (

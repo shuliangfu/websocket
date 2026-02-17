@@ -31,10 +31,10 @@ const MONGODB_CONFIG = {
   directConnection: true,
   ...(mongoUser && mongoPassword
     ? {
-        username: mongoUser,
-        password: mongoPassword,
-        authSource: getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin"),
-      }
+      username: mongoUser,
+      password: mongoPassword,
+      authSource: getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin"),
+    }
     : {}),
 };
 
@@ -42,7 +42,11 @@ const MONGODB_CONFIG = {
 async function checkMongoDBAvailable(): Promise<boolean> {
   try {
     const url = mongoUser && mongoPassword
-      ? `mongodb://${encodeURIComponent(mongoUser)}:${encodeURIComponent(mongoPassword)}@${MONGODB_CONFIG.host}:${MONGODB_CONFIG.port}/${MONGODB_CONFIG.database}?authSource=${getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin")}`
+      ? `mongodb://${encodeURIComponent(mongoUser)}:${
+        encodeURIComponent(mongoPassword)
+      }@${MONGODB_CONFIG.host}:${MONGODB_CONFIG.port}/${MONGODB_CONFIG.database}?authSource=${
+        getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin")
+      }`
       : `mongodb://${MONGODB_CONFIG.host}:${MONGODB_CONFIG.port}/${MONGODB_CONFIG.database}`;
     const client = new MongoClient(url);
     await client.connect();

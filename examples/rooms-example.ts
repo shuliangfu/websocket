@@ -80,18 +80,21 @@ io.on("connection", (socket) => {
    * 获取房间信息
    * 客户端发送: socket.emit("get-room-info", "room-123", (info) => { ... })
    */
-  socket.on("get-room-info", (roomId: string, callback?: (info: any) => void) => {
-    // 注意：这里需要访问 roomManager，实际实现可能需要扩展 API
-    console.log(`[房间管理] 用户 ${socket.id} 查询房间信息: ${roomId}`);
+  socket.on(
+    "get-room-info",
+    (roomId: string, callback?: (info: any) => void) => {
+      // 注意：这里需要访问 roomManager，实际实现可能需要扩展 API
+      console.log(`[房间管理] 用户 ${socket.id} 查询房间信息: ${roomId}`);
 
-    if (callback) {
-      callback({
-        roomId: roomId,
-        // 实际实现中需要从 roomManager 获取
-        message: "房间信息查询功能需要扩展 API",
-      });
-    }
-  });
+      if (callback) {
+        callback({
+          roomId: roomId,
+          // 实际实现中需要从 roomManager 获取
+          message: "房间信息查询功能需要扩展 API",
+        });
+      }
+    },
+  );
 
   /**
    * 向所有连接广播消息（除了发送者）

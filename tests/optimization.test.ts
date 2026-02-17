@@ -23,7 +23,7 @@ import {
 // ========== fnv1aHash 哈希函数 ==========
 describe("fnv1aHash 快速哈希", () => {
   it("相同输入应产生相同哈希", () => {
-    const str = "plain:{\"type\":\"event\",\"event\":\"test\",\"data\":{}}";
+    const str = 'plain:{"type":"event","event":"test","data":{}}';
     expect(fnv1aHash(str)).toBe(fnv1aHash(str));
   });
 
@@ -83,11 +83,13 @@ describe("MessageCache 消息序列化缓存", () => {
 // ========== MessageQueue 消息队列 ==========
 describe("MessageQueue 消息队列", () => {
   /** 创建用于测试的 mock Socket */
-  function createMockSocket(overrides?: Partial<{
-    id: string;
-    connected: boolean;
-    emitCalls: Array<{ event: string; data?: unknown }>;
-  }>): Socket {
+  function createMockSocket(
+    overrides?: Partial<{
+      id: string;
+      connected: boolean;
+      emitCalls: Array<{ event: string; data?: unknown }>;
+    }>,
+  ): Socket {
     const emitCalls: Array<{ event: string; data?: unknown }> =
       overrides?.emitCalls ?? [];
     return {
@@ -137,7 +139,9 @@ describe("MessageQueue 消息队列", () => {
     const mockSocket = createMockSocket({
       connected: true,
       emitCalls,
-    }) as unknown as Socket & { emit: (e: string, d?: unknown) => Promise<void> };
+    }) as unknown as Socket & {
+      emit: (e: string, d?: unknown) => Promise<void>;
+    };
     mockSocket.emit = async () => {
       throw new Error("mock send error");
     };
@@ -157,10 +161,12 @@ describe("MessageQueue 消息队列", () => {
 // ========== BatchHeartbeatManager 批量心跳 ==========
 describe("BatchHeartbeatManager 批量心跳管理器", () => {
   /** 创建 mock Socket 供 BatchHeartbeatManager 使用 */
-  function createMockSocketForHeartbeat(overrides?: Partial<{
-    id: string;
-    connected: boolean;
-  }>): Socket {
+  function createMockSocketForHeartbeat(
+    overrides?: Partial<{
+      id: string;
+      connected: boolean;
+    }>,
+  ): Socket {
     return {
       id: overrides?.id ?? "mock-hb-1",
       connected: overrides?.connected ?? true,

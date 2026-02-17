@@ -32,6 +32,10 @@
  * ```
  */
 
+// 服务端 i18n：入口加载文案并设置 locale（仅服务端）
+import { initWebSocketI18n } from "./i18n.ts";
+initWebSocketI18n();
+
 // 导出类型
 export type {
   EncryptionConfig,
