@@ -41,7 +41,9 @@ io.on("connection", (socket) => {
     }
 
     console.log(
-      `[心跳检测] 收到来自 ${socket.id} 的 ping (第 ${stats?.pingCount || 0} 次)`,
+      `[心跳检测] 收到来自 ${socket.id} 的 ping (第 ${
+        stats?.pingCount || 0
+      } 次)`,
     );
 
     // 发送 pong 响应

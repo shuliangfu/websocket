@@ -5,11 +5,7 @@
 
 import { describe, it } from "@dreamer/test";
 import { Server } from "../src/mod.ts";
-import {
-  createWebSocketClient,
-  delay,
-  waitForMessage,
-} from "./test-utils.ts";
+import { createWebSocketClient, delay, waitForMessage } from "./test-utils.ts";
 
 describe("心跳检测", () => {
   it("应该发送心跳消息", async () => {

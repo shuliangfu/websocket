@@ -1,0 +1,53 @@
+{
+  "log": {
+    "websocket": {
+      "requestReceived": "Request received path={path} method={method}",
+      "pathMismatch": "Path does not match path={path}, returning 404",
+      "upgradeStart": "Starting WebSocket upgrade path={path}",
+      "invalidSocketObject": "Invalid WebSocket object: {type}",
+      "socketMissingMethods": "WebSocket object missing required methods. Properties: {adapterKeys}, prototype: {prototypeKeys}",
+      "upgradeSuccess": "WebSocket upgrade success socketId={socketId} path={path}",
+      "upgradeFailed": "WebSocket upgrade failed path={path}: {error}",
+      "serverCloseTimeout": "Server close timeout",
+      "socketMissingMethodsConstructor": "WebSocket object received in constructor missing required methods",
+      "socketNotInitialized": "WebSocket object not initialized",
+      "socketNoMessageListener": "WebSocket object does not support message listener. Type: {type}, keys: {keys}",
+      "readFileChunkFailed": "Failed to read file chunk",
+      "uploadTimeout": "Upload timeout",
+      "missingChunk": "Missing chunk {index}",
+      "chunksIncomplete": "Chunks incomplete",
+      "sendErrorCallbackFailed": "Failed to send error callback",
+      "namespaceNameMustStartWithSlash": "Namespace name must start with '/'",
+      "cannotDeleteDefaultNamespace": "Cannot delete default namespace",
+      "connectionEstablished": "[WebSocket] Connection established: {socketId} from {address}",
+      "authFailed": "Authentication failed",
+      "authError": "Authentication error"
+    },
+    "websocketClient": {
+      "notConnectedCannotSendBinary": "WebSocket not connected, cannot send binary",
+      "uploadCancelledOrDisconnected": "Upload cancelled or connection closed",
+      "connectionClosed": "Connection closed",
+      "readFileChunkFailed": "Failed to read file chunk",
+      "uploadFailed": "Upload failed"
+    },
+    "adapterRedis": {
+      "needConnectionOrClient": "RedisAdapter requires connection config or client instance",
+      "cannotCreateClient": "Cannot create Redis client: {error}. Ensure redis package is installed (npm install redis)",
+      "cannotCreatePubSubClient": "Cannot create Redis Pub/Sub client: {error}. Ensure redis package is installed (npm install redis)",
+      "clientNotConnected": "Redis client not connected",
+      "parseMessageFailed": "Failed to parse Redis message"
+    },
+    "adapterMongo": {
+      "clientNotInstalled": "MongoDB client not installed. Install mongodb package: deno add npm:mongodb",
+      "connectFailedReplicaSet": "MongoDB connection failed (replica set): {error}. Hint: If using single-node replica set, add replicaSet to config",
+      "connectFailed": "MongoDB connection failed: {error}",
+      "databaseNotConnected": "MongoDB database not connected",
+      "createIndexFailed": "Failed to create MongoDB index (may already exist)",
+      "messagesCollectionNotInitialized": "MongoDB messages collection not initialized",
+      "changeEventFailed": "MongoDB change event handling failed",
+      "changeStreamsUnavailable": "MongoDB Change Streams unavailable (single-node mode), falling back to polling",
+      "changeStreamsError": "MongoDB Change Streams error",
+      "pollingError": "MongoDB polling error"
+    }
+  }
+}

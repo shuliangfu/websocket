@@ -710,11 +710,9 @@ export class Client {
       } catch (error) {
         if (options?.onError) {
           options.onError(
-            error instanceof Error
-              ? error
-              : new Error(
-                this.tr("log.websocketClient.uploadFailed", "上传失败"),
-              ),
+            error instanceof Error ? error : new Error(
+              this.tr("log.websocketClient.uploadFailed", "上传失败"),
+            ),
           );
         }
       }

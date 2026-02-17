@@ -1,19 +1,20 @@
 # @dreamer/websocket/client
 
-> 一个用于浏览器的 WebSocket 客户端库，提供 WebSocket 客户端功能，支持实时双向通信
+> 一个用于浏览器的 WebSocket 客户端包，提供 WebSocket
+> 客户端功能，支持实时双向通信
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket/client)](https://jsr.io/@dreamer/websocket/client)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../../../LICENSE)
 
 ---
 
 ## 服务端支持
 
-服务端 WebSocket 支持请查看 [服务端文档](../../README.md)。
+服务端 WebSocket 支持请查看 [服务端文档](../README.md)。
 
 ## 功能
 
-WebSocket 客户端库，用于浏览器环境中的实时通信应用。
+WebSocket 客户端包，用于浏览器环境中的实时通信应用。
 
 ## 特性
 
@@ -125,7 +126,7 @@ client.close();
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE.md](../../../LICENSE.md)
+Apache License 2.0 - 详见 [LICENSE](../../../LICENSE)
 
 ---
 

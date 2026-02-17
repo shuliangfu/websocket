@@ -70,11 +70,15 @@ io.on("connection", (socket) => {
       console.log(`[二进制消息] 可能是控制消息`);
     } else if (size < 1024 * 1024) {
       // 中等数据，可能是图片或小文件
-      console.log(`[二进制消息] 可能是图片或小文件 (${(size / 1024).toFixed(2)} KB)`);
+      console.log(
+        `[二进制消息] 可能是图片或小文件 (${(size / 1024).toFixed(2)} KB)`,
+      );
     } else {
       // 大数据，可能是视频或大文件
       console.log(
-        `[二进制消息] 可能是视频或大文件 (${(size / 1024 / 1024).toFixed(2)} MB)`,
+        `[二进制消息] 可能是视频或大文件 (${
+          (size / 1024 / 1024).toFixed(2)
+        } MB)`,
       );
     }
 
@@ -159,7 +163,8 @@ io.on("connection", (socket) => {
     // 验证文件大小
     if (receivedSize !== metadata.fileSize) {
       socket.emit("upload-error", {
-        message: `文件大小不匹配: 期望 ${metadata.fileSize}, 实际 ${receivedSize}`,
+        message:
+          `文件大小不匹配: 期望 ${metadata.fileSize}, 实际 ${receivedSize}`,
       });
       return;
     }

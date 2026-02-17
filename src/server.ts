@@ -9,6 +9,7 @@ import {
   type ServeHandle,
   upgradeWebSocket,
 } from "@dreamer/runtime-adapter";
+import { $t, setWebSocketLocale } from "./i18n.ts";
 import { BatchHeartbeatManager } from "./batch-heartbeat.ts";
 import { EncryptionManager } from "./encryption.ts";
 import { MessageCache } from "./message-cache.ts";
@@ -64,16 +65,19 @@ export class Server {
   private batchHeartbeatManager?: BatchHeartbeatManager;
 
   /**
-   * 获取翻译文本，无 t 或翻译缺失时返回 fallback
-   * 供 Socket、Namespace 等子模块调用
+   * 获取翻译文本：使用包内 $t（语言在构造时由 options.lang 设置），key 有翻译时返回翻译结果，否则返回 fallback
+   * 供 Socket、Namespace、适配器等子模块调用
    */
   tr(
     key: string,
     fallback: string,
     params?: Record<string, string | number | boolean>,
   ): string {
-    const r = this.options.t?.(key, params);
-    return (r != null && r !== key) ? r : fallback;
+    const translated = $t(
+      key,
+      params as Record<string, string | number | boolean> | undefined,
+    );
+    return translated !== key ? translated : fallback;
   }
 
   /**
@@ -98,6 +102,11 @@ export class Server {
     } as
       & ServerOptions
       & Required<Pick<ServerOptions, "path" | "pingTimeout" | "pingInterval">>;
+
+    // 若指定了 lang，在构造时设置语言，后续 tr() 将使用该 locale
+    if (this.options.lang !== undefined) {
+      setWebSocketLocale(this.options.lang);
+    }
 
     this.logger = this.options.logger ?? createLogger();
 
@@ -321,7 +330,9 @@ export class Server {
         throw new Error(
           this.tr(
             "log.websocket.socketMissingMethods",
-            `WebSocket 对象缺少必要的方法。属性: ${adapterKeys.join(", ")}, 原型属性: ${prototypeKeys.join(", ")}`,
+            `WebSocket 对象缺少必要的方法。属性: ${
+              adapterKeys.join(", ")
+            }, 原型属性: ${prototypeKeys.join(", ")}`,
             {
               adapterKeys: adapterKeys.join(", "),
               prototypeKeys: prototypeKeys.join(", "),
@@ -400,7 +411,9 @@ export class Server {
       this.debugLog(
         this.tr(
           "log.websocket.upgradeFailed",
-          `WebSocket 升级失败 path=${pathname}: ${err instanceof Error ? err.message : String(err)}`,
+          `WebSocket 升级失败 path=${pathname}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
           {
             path: pathname,
             error: err instanceof Error ? err.message : String(err),

@@ -244,7 +244,9 @@ export class Socket {
       throw new Error(
         this.server.tr(
           "log.websocket.socketNoMessageListener",
-          `WebSocket 对象不支持消息监听。类型: ${typeof this.ws}, 属性: ${Object.keys(this.ws || {}).join(", ")}`,
+          `WebSocket 对象不支持消息监听。类型: ${typeof this.ws}, 属性: ${
+            Object.keys(this.ws || {}).join(", ")
+          }`,
           {
             type: typeof this.ws,
             keys: Object.keys(this.ws || {}).join(", "),
