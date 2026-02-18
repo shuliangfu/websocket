@@ -48,7 +48,11 @@ async function checkMongoDBAvailable(): Promise<boolean> {
         getEnvWithDefault("MONGODB_AUTH_SOURCE", "admin")
       }`
       : `mongodb://${MONGODB_CONFIG.host}:${MONGODB_CONFIG.port}/${MONGODB_CONFIG.database}`;
-    const client = new MongoClient(url);
+    // 开启副本集（rs0）时需传 directConnection + replicaSet，否则驱动可能无法正确连接
+    const client = new MongoClient(url, {
+      directConnection: MONGODB_CONFIG.directConnection ?? true,
+      replicaSet: MONGODB_CONFIG.replicaSet ?? "rs0",
+    });
     await client.connect();
     await client.db().command({ ping: 1 });
     await client.close();
@@ -110,14 +114,18 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
       socket.join("room-2");
     });
 
-    // 创建真实的 Socket 连接
+    // 创建真实的 Socket 连接，必须等 onopen 再继续（Bun 下升级可能较慢）
     const ws1 = new WebSocket(`ws://localhost:${testPort1}/ws`);
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       ws1.onopen = () => resolve();
-      setTimeout(() => resolve(), 2000);
+      ws1.onerror = (e) => reject(new Error(`WebSocket 连接失败: ${e}`));
+      setTimeout(
+        () => reject(new Error("WebSocket 连接超时（8s）")),
+        8000,
+      );
     });
 
-    await delay(1000); // 等待 socket.join 完成并同步到 MongoDB
+    await delay(2000); // 等待 socket.join 完成并同步到 MongoDB（Bun 下多留时间）
 
     // 获取适配器实例（通过私有属性访问）
     const serverInternal = server1 as unknown as {
@@ -135,17 +143,20 @@ describe("MongoDB 适配器 - 真实场景测试", () => {
 
     // 检查 Socket 所在的房间
     const allSockets = Array.from(serverInternal.sockets.keys());
-    if (allSockets.length > 0) {
-      const socketId = allSockets[0];
-      const roomsForSocket = await adapter.getRoomsForSocket(socketId);
-      expect(roomsForSocket.length).toBeGreaterThan(0);
-    }
+    expect(allSockets.length).toBeGreaterThan(0);
+    const socketId = allSockets[0];
+    const roomsForSocket = await adapter.getRoomsForSocket(socketId);
+    expect(roomsForSocket.length).toBeGreaterThan(0);
 
     ws1.close();
     await delay(500);
     await server1.close();
     await delay(1000);
-  }, { sanitizeOps: false, sanitizeResources: false });
+  }, {
+    sanitizeOps: false,
+    sanitizeResources: false,
+    timeout: 15000,
+  });
 
   it("应该支持服务器注册和注销", async () => {
     if (!mongoDBAvailable) return;

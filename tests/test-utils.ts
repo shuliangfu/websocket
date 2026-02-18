@@ -33,7 +33,7 @@ export async function createWebSocketClient(
 }
 
 /**
- * 等待 WebSocket 消息
+ * 等待 WebSocket 消息（使用 addEventListener，兼容 Bun）
  */
 export function waitForMessage(
   ws: WebSocket,
@@ -41,18 +41,63 @@ export function waitForMessage(
 ): Promise<MessageEvent> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
+      ws.removeEventListener("message", handler);
+      ws.removeEventListener("error", errorHandler);
       reject(new Error("等待消息超时"));
     }, timeout);
 
-    ws.onmessage = (event) => {
+    const handler = (event: MessageEvent) => {
       clearTimeout(timer);
+      ws.removeEventListener("message", handler);
+      ws.removeEventListener("error", errorHandler);
       resolve(event);
     };
-
-    ws.onerror = (error) => {
+    const errorHandler = (error: Event) => {
       clearTimeout(timer);
+      ws.removeEventListener("message", handler);
+      ws.removeEventListener("error", errorHandler);
       reject(error);
     };
+    ws.addEventListener("message", handler);
+    ws.addEventListener("error", errorHandler);
+  });
+}
+
+/**
+ * 等待 WebSocket 收到 type 为 "ping" 的 JSON 消息（用于批量心跳等）
+ */
+export function waitForPing(
+  ws: WebSocket,
+  timeout = 5000,
+): Promise<{ type: string }> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      ws.removeEventListener("message", handler);
+      ws.removeEventListener("error", errorHandler);
+      reject(new Error("等待 ping 超时"));
+    }, timeout);
+
+    const handler = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data as string) as { type?: string };
+        if (data?.type === "ping") {
+          clearTimeout(timer);
+          ws.removeEventListener("message", handler);
+          ws.removeEventListener("error", errorHandler);
+          resolve({ type: data.type });
+        }
+      } catch {
+        // 非 JSON，忽略
+      }
+    };
+    const errorHandler = (err: Event) => {
+      clearTimeout(timer);
+      ws.removeEventListener("message", handler);
+      ws.removeEventListener("error", errorHandler);
+      reject(err);
+    };
+    ws.addEventListener("message", handler);
+    ws.addEventListener("error", errorHandler);
   });
 }
 

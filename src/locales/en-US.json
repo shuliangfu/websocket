@@ -1,4 +1,14 @@
 {
+  "response": {
+    "badRequest": "Bad Request",
+    "notFound": "Not Found",
+    "tooManyConnections": "Too Many Connections",
+    "websocketUpgrade": "WebSocket upgrade",
+    "websocketUpgradeFailed": "WebSocket upgrade failed"
+  },
+  "error": {
+    "corsValidationFailed": "CORS validation failed"
+  },
   "log": {
     "websocket": {
       "requestReceived": "Request received path={path} method={method}",
@@ -17,11 +27,14 @@
       "missingChunk": "Missing chunk {index}",
       "chunksIncomplete": "Chunks incomplete",
       "sendErrorCallbackFailed": "Failed to send error callback",
+      "messageSendFailed": "Message send failed: {error}",
       "namespaceNameMustStartWithSlash": "Namespace name must start with '/'",
       "cannotDeleteDefaultNamespace": "Cannot delete default namespace",
       "connectionEstablished": "[WebSocket] Connection established: {socketId} from {address}",
       "authFailed": "Authentication failed",
-      "authError": "Authentication error"
+      "authError": "Authentication error",
+      "connectionLimitExceeded": "Connection limit exceeded",
+      "messageRateLimitExceeded": "Message rate limit exceeded"
     },
     "websocketClient": {
       "notConnectedCannotSendBinary": "WebSocket not connected, cannot send binary",
@@ -35,7 +48,8 @@
       "cannotCreateClient": "Cannot create Redis client: {error}. Ensure redis package is installed (npm install redis)",
       "cannotCreatePubSubClient": "Cannot create Redis Pub/Sub client: {error}. Ensure redis package is installed (npm install redis)",
       "clientNotConnected": "Redis client not connected",
-      "parseMessageFailed": "Failed to parse Redis message"
+      "parseMessageFailed": "Failed to parse Redis message",
+      "parseRoomMessageFailed": "Failed to parse Redis room message"
     },
     "adapterMongo": {
       "clientNotInstalled": "MongoDB client not installed. Install mongodb package: deno add npm:mongodb",

@@ -27,7 +27,7 @@
 
 import { EncryptionManager } from "../encryption.ts";
 import { parseMessage, serializeMessage } from "../message.ts";
-import type { EncryptionConfig, WebSocketMessage } from "../types.ts";
+import type { EncryptionConfig, WebSocketMessage } from "./types.ts";
 
 /**
  * WebSocket 客户端配置选项
@@ -53,14 +53,6 @@ export interface ClientOptions {
   protocols?: string[];
   /** 加密配置（可选，启用后客户端会自动加密消息） */
   encryption?: EncryptionConfig;
-  /**
-   * 翻译函数（可选，用于 i18n）
-   * 传入时，错误信息将使用 t(key, params) 获取翻译
-   */
-  t?: (
-    key: string,
-    params?: Record<string, string | number | boolean>,
-  ) => string | undefined;
 }
 
 /**
@@ -107,18 +99,6 @@ export class Client {
     "disconnected";
   /** 加密管理器（用于自动加密消息） */
   private encryptionManager?: EncryptionManager;
-
-  /**
-   * 获取翻译文本，无 t 或翻译缺失时返回 fallback
-   */
-  private tr(
-    key: string,
-    fallback: string,
-    params?: Record<string, string | number | boolean>,
-  ): string {
-    const r = this.options.t?.(key, params);
-    return (r != null && r !== key) ? r : fallback;
-  }
 
   /**
    * 创建 WebSocket 客户端实例
@@ -562,12 +542,7 @@ export class Client {
    */
   sendBinary(data: ArrayBuffer | Blob | Uint8Array): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        this.tr(
-          "log.websocketClient.notConnectedCannotSendBinary",
-          "WebSocket 未连接，无法发送二进制消息",
-        ),
-      );
+      throw new Error("WebSocket not connected, cannot send binary");
     }
 
     // 将 Uint8Array 转换为 ArrayBuffer
@@ -621,14 +596,7 @@ export class Client {
     const uploadChunk = async (chunkIndex: number) => {
       if (cancelled || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
         if (options?.onError) {
-          options.onError(
-            new Error(
-              this.tr(
-                "log.websocketClient.uploadCancelledOrDisconnected",
-                "上传已取消或连接已断开",
-              ),
-            ),
-          );
+          options.onError(new Error("Upload cancelled or connection closed"));
         }
         return;
       }
@@ -655,11 +623,7 @@ export class Client {
         // 发送分片数据（二进制）
         await new Promise<void>((resolve, reject) => {
           if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            reject(
-              new Error(
-                this.tr("log.websocketClient.connectionClosed", "连接已断开"),
-              ),
-            );
+            reject(new Error("Connection closed"));
             return;
           }
 
@@ -669,25 +633,10 @@ export class Client {
               this.ws!.send(reader.result);
               resolve();
             } else {
-              reject(
-                new Error(
-                  this.tr(
-                    "log.websocketClient.readFileChunkFailed",
-                    "读取文件分片失败",
-                  ),
-                ),
-              );
+              reject(new Error("Failed to read file chunk"));
             }
           };
-          reader.onerror = () =>
-            reject(
-              new Error(
-                this.tr(
-                  "log.websocketClient.readFileChunkFailed",
-                  "读取文件分片失败",
-                ),
-              ),
-            );
+          reader.onerror = () => reject(new Error("Failed to read file chunk"));
           reader.readAsArrayBuffer(chunk);
         });
 
@@ -710,9 +659,7 @@ export class Client {
       } catch (error) {
         if (options?.onError) {
           options.onError(
-            error instanceof Error ? error : new Error(
-              this.tr("log.websocketClient.uploadFailed", "上传失败"),
-            ),
+            error instanceof Error ? error : new Error("Upload failed"),
           );
         }
       }

@@ -18,6 +18,7 @@ import {
   delay,
   waitForEvent,
   waitForMessage,
+  waitForPing,
 } from "./test-utils.ts";
 
 // ========== fnv1aHash 哈希函数 ==========
@@ -149,7 +150,8 @@ describe("MessageQueue 消息队列", () => {
     let errorCalled = false;
     const queue = new MessageQueue(10, 5, 1, (msg, err) => {
       errorCalled = true;
-      expect(msg).toContain("消息发送失败");
+      // message-queue 使用 $t("log.websocket.messageSendFailed")，未传 lang 时为英文
+      expect(msg).toContain("Message send failed");
       expect(err).toBeInstanceOf(Error);
     });
     queue.enqueue(mockSocket, "fail-event");
@@ -355,17 +357,13 @@ describe("useBatchHeartbeat 批量心跳", () => {
 
     const testPort = server.getPort();
     const ws = await createWebSocketClient(`ws://localhost:${testPort}/ws`);
-    await delay(300);
-
+    // 使用 addEventListener 的 waitForPing，超时放宽以兼容 Bun 定时器
     let gotPing = false;
     try {
-      const ev = await waitForMessage(ws, 1500);
-      const data = JSON.parse(ev.data as string);
-      if (data.type === "ping") {
-        gotPing = true;
-      }
+      await waitForPing(ws, 5000);
+      gotPing = true;
     } catch {
-      // 超时
+      // 超时未收到 ping
     }
 
     ws.send(JSON.stringify({ type: "pong" }));

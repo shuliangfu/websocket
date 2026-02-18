@@ -65,22 +65,6 @@ export class Server {
   private batchHeartbeatManager?: BatchHeartbeatManager;
 
   /**
-   * 获取翻译文本：使用包内 $t（语言在构造时由 options.lang 设置），key 有翻译时返回翻译结果，否则返回 fallback
-   * 供 Socket、Namespace、适配器等子模块调用
-   */
-  tr(
-    key: string,
-    fallback: string,
-    params?: Record<string, string | number | boolean>,
-  ): string {
-    const translated = $t(
-      key,
-      params as Record<string, string | number | boolean> | undefined,
-    );
-    return translated !== key ? translated : fallback;
-  }
-
-  /**
    * 调试日志：仅当 options.debug=true 时输出，使用 logger.debug（与 @dreamer/server 一致）
    */
   private debugLog(message: string): void {
@@ -103,7 +87,7 @@ export class Server {
       & ServerOptions
       & Required<Pick<ServerOptions, "path" | "pingTimeout" | "pingInterval">>;
 
-    // 若指定了 lang，在构造时设置语言，后续 tr() 将使用该 locale
+    // 若指定了 lang，在构造时设置语言，后续 $t 将使用该 locale
     if (this.options.lang !== undefined) {
       setWebSocketLocale(this.options.lang);
     }
@@ -113,13 +97,10 @@ export class Server {
     // 初始化房间管理器
     this.roomManager = new RoomManager();
 
-    // 初始化命名空间管理器（默认命名空间），传入 tr 供命名空间错误信息翻译
+    // 初始化命名空间管理器（默认命名空间），命名空间内直接使用 $t
     const defaultNamespace = new Namespace("/");
     defaultNamespace.setServer(this);
-    this.namespaceManager = new NamespaceManager(
-      defaultNamespace,
-      (key, fallback, params) => this.tr(key, fallback, params),
-    );
+    this.namespaceManager = new NamespaceManager(defaultNamespace);
 
     // 初始化加密管理器（如果配置了加密）
     if (this.options.encryption) {
@@ -252,14 +233,33 @@ export class Server {
   async handleRequest(request: Request): Promise<Response> {
     await this.ensureAdapter();
 
-    const url = new URL(request.url);
+    // 防止 Bun 等环境下传入空或无效 request.url 导致 new URL("") 抛错、未返回 Response
+    if (!request.url || request.url === "") {
+      return new Response(
+        $t("response.badRequest", undefined, this.options.lang),
+        {
+          status: 400,
+        },
+      );
+    }
+    let url: URL;
+    try {
+      url = new URL(request.url);
+    } catch {
+      return new Response(
+        $t("response.badRequest", undefined, this.options.lang),
+        {
+          status: 400,
+        },
+      );
+    }
     const pathname = url.pathname;
 
     this.debugLog(
-      this.tr(
+      $t(
         "log.websocket.requestReceived",
-        `收到请求 path=${pathname} method=${request.method}`,
         { path: pathname, method: request.method },
+        this.options.lang,
       ),
     );
 
@@ -288,32 +288,29 @@ export class Server {
 
     if (!matchedNamespace) {
       this.debugLog(
-        this.tr(
-          "log.websocket.pathMismatch",
-          `路径不匹配 path=${pathname}，返回 404`,
-          { path: pathname },
-        ),
+        $t("log.websocket.pathMismatch", { path: pathname }, this.options.lang),
       );
-      return new Response("Not Found", { status: 404 });
+      return new Response(
+        $t("response.notFound", undefined, this.options.lang),
+        {
+          status: 404,
+        },
+      );
     }
 
     try {
       this.debugLog(
-        this.tr(
-          "log.websocket.upgradeStart",
-          `开始 WebSocket 升级 path=${pathname}`,
-          { path: pathname },
-        ),
+        $t("log.websocket.upgradeStart", { path: pathname }, this.options.lang),
       );
       const upgradeResult = upgradeWebSocket(request);
       const { socket, response } = upgradeResult;
 
       if (!socket || typeof socket !== "object") {
         throw new Error(
-          this.tr(
+          $t(
             "log.websocket.invalidSocketObject",
-            `无效的 WebSocket 对象: ${typeof socket}`,
             { type: typeof socket },
+            this.options.lang,
           ),
         );
       }
@@ -328,16 +325,10 @@ export class Server {
           Object.getPrototypeOf(socket || {}),
         );
         throw new Error(
-          this.tr(
-            "log.websocket.socketMissingMethods",
-            `WebSocket 对象缺少必要的方法。属性: ${
-              adapterKeys.join(", ")
-            }, 原型属性: ${prototypeKeys.join(", ")}`,
-            {
-              adapterKeys: adapterKeys.join(", "),
-              prototypeKeys: prototypeKeys.join(", "),
-            },
-          ),
+          $t("log.websocket.socketMissingMethods", {
+            adapterKeys: adapterKeys.join(", "),
+            prototypeKeys: prototypeKeys.join(", "),
+          }, this.options.lang),
         );
       }
 
@@ -361,7 +352,10 @@ export class Server {
         this.options.maxConnections &&
         this.sockets.size >= this.options.maxConnections
       ) {
-        return new Response("Too Many Connections", { status: 503 });
+        return new Response(
+          $t("response.tooManyConnections", undefined, this.options.lang),
+          { status: 503 },
+        );
       }
 
       this.roomManager.registerSocket(socketInstance.id, socketInstance);
@@ -400,27 +394,34 @@ export class Server {
       }
 
       this.debugLog(
-        this.tr(
+        $t(
           "log.websocket.upgradeSuccess",
-          `WebSocket 升级成功 socketId=${socketInstance.id} path=${pathname}`,
           { socketId: socketInstance.id, path: pathname },
+          this.options.lang,
         ),
       );
-      return response || new Response("WebSocket upgrade", { status: 101 });
+      return response ||
+        new Response(
+          $t("response.websocketUpgrade", undefined, this.options.lang),
+          {
+            status: 101,
+          },
+        );
     } catch (err) {
       this.debugLog(
-        this.tr(
+        $t(
           "log.websocket.upgradeFailed",
-          `WebSocket 升级失败 path=${pathname}: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
           {
             path: pathname,
             error: err instanceof Error ? err.message : String(err),
           },
+          this.options.lang,
         ),
       );
-      return new Response("WebSocket upgrade failed", { status: 500 });
+      return new Response(
+        $t("response.websocketUpgradeFailed", undefined, this.options.lang),
+        { status: 500 },
+      );
     }
   }
 
@@ -889,9 +890,10 @@ export class Server {
               () =>
                 reject(
                   new Error(
-                    this.tr(
+                    $t(
                       "log.websocket.serverCloseTimeout",
-                      "服务器关闭超时",
+                      undefined,
+                      this.options.lang,
                     ),
                   ),
                 ),

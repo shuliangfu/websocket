@@ -27,6 +27,7 @@
  * - 单节点副本集需要在 MongoDB 配置中启用副本集模式。
  */
 
+import { $t } from "../i18n.ts";
 import type { Socket } from "../socket.ts";
 import type { AdapterOptions, MessageData, WebSocketAdapter } from "./types.ts";
 
@@ -158,21 +159,11 @@ export class MongoDBAdapter implements WebSocketAdapter {
   private internalClient: any = null;
   private pollingTimer?: number;
   private useChangeStreams: boolean = true;
-  /** 翻译函数（可选） */
-  private tr: (
-    key: string,
-    fallback: string,
-    params?: Record<string, string | number | boolean>,
-  ) => string;
 
   constructor(options: MongoDBAdapterOptions) {
     this.connectionConfig = options.connection;
     this.heartbeatInterval = options.heartbeatInterval || 30;
     this.keyPrefix = options.keyPrefix || "ws";
-    this.tr = (key, fallback, params) => {
-      const r = options.t?.(key, params);
-      return (r != null && r !== key) ? r : fallback;
-    };
   }
 
   /**
@@ -238,12 +229,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           error.message.includes("Failed to resolve") ||
           error.message.includes("Cannot find module"))
       ) {
-        throw new Error(
-          this.tr(
-            "log.adapterMongo.clientNotInstalled",
-            "MongoDB 客户端未安装。请安装 mongodb 包：deno add npm:mongodb",
-          ),
-        );
+        throw new Error($t("log.adapterMongo.clientNotInstalled"));
       }
 
       // 如果是副本集相关错误，提供更详细的提示
@@ -256,25 +242,16 @@ export class MongoDBAdapter implements WebSocketAdapter {
         errorMessage.includes("not a replica set") ||
         errorMessage.includes("No suitable servers found")
       ) {
-        const url = this.buildConnectionUrl();
+        const _url = this.buildConnectionUrl();
         throw new Error(
-          this.tr(
-            "log.adapterMongo.connectFailedReplicaSet",
-            `连接 MongoDB 失败（副本集相关）: ${errorMessage}\n` +
-              `连接 URL: ${url.replace(/\/\/[^:]+:[^@]+@/, "//***:***@")}\n` +
-              `提示：如果使用单节点副本集，请在配置中添加 replicaSet 参数，例如：\n` +
-              `{ host: "127.0.0.1", port: 27017, database: "xxx", replicaSet: "rs0" }`,
-            { error: errorMessage },
-          ),
+          $t("log.adapterMongo.connectFailedReplicaSet", {
+            error: errorMessage,
+          }),
         );
       }
 
       throw new Error(
-        this.tr(
-          "log.adapterMongo.connectFailed",
-          `连接 MongoDB 失败: ${errorMessage}`,
-          { error: errorMessage },
-        ),
+        $t("log.adapterMongo.connectFailed", { error: errorMessage }),
       );
     }
   }
@@ -350,12 +327,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
    */
   private async initializeCollections(): Promise<void> {
     if (!this.db) {
-      throw new Error(
-        this.tr(
-          "log.adapterMongo.databaseNotConnected",
-          "MongoDB 数据库未连接",
-        ),
-      );
+      throw new Error($t("log.adapterMongo.databaseNotConnected"));
     }
 
     // 房间集合（存储房间和 Socket 的关系）- 使用 keyPrefix 隔离不同应用
@@ -386,13 +358,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
       }
     } catch (error) {
       // 索引可能已存在，忽略错误
-      console.warn(
-        this.tr(
-          "log.adapterMongo.createIndexFailed",
-          "创建 MongoDB 索引失败（可能已存在）",
-        ),
-        error,
-      );
+      console.warn($t("log.adapterMongo.createIndexFailed"), error);
     }
   }
 
@@ -553,12 +519,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
     callback: (message: MessageData, serverId: string) => void,
   ): Promise<void> | void {
     if (!this.messagesCollection) {
-      throw new Error(
-        this.tr(
-          "log.adapterMongo.messagesCollectionNotInitialized",
-          "MongoDB 消息集合未初始化",
-        ),
-      );
+      throw new Error($t("log.adapterMongo.messagesCollectionNotInitialized"));
     }
 
     // 更新 messageCallback（支持多次调用，覆盖之前的 callback）
@@ -620,13 +581,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
               }
             }
           } catch (error) {
-            console.error(
-              this.tr(
-                "log.adapterMongo.changeEventFailed",
-                "处理 MongoDB 变更事件失败",
-              ),
-              error,
-            );
+            console.error($t("log.adapterMongo.changeEventFailed"), error);
           }
         });
 
@@ -639,12 +594,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
             errorMessage.includes("replicaSet") ||
             errorMessage.includes("not a replica set")
           ) {
-            console.warn(
-              this.tr(
-                "log.adapterMongo.changeStreamsUnavailable",
-                "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
-              ),
-            );
+            console.warn($t("log.adapterMongo.changeStreamsUnavailable"));
             this.useChangeStreams = false;
             if (this.changeStream) {
               this.changeStream.close().catch(() => {});
@@ -652,13 +602,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
             }
             this.startPolling(callback);
           } else {
-            console.error(
-              this.tr(
-                "log.adapterMongo.changeStreamsError",
-                "MongoDB Change Streams 错误",
-              ),
-              error,
-            );
+            console.error($t("log.adapterMongo.changeStreamsError"), error);
           }
         });
 
@@ -673,12 +617,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           errorMessage.includes("replicaSet") ||
           errorMessage.includes("not a replica set")
         ) {
-          console.warn(
-            this.tr(
-              "log.adapterMongo.changeStreamsUnavailable",
-              "MongoDB Change Streams 不可用（单节点模式），自动降级到轮询方案",
-            ),
-          );
+          console.warn($t("log.adapterMongo.changeStreamsUnavailable"));
           this.useChangeStreams = false;
           this.startPolling(callback);
           return Promise.resolve();
@@ -753,10 +692,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           processedIds = new Set(idsArray.slice(-500));
         }
       } catch (error) {
-        console.error(
-          this.tr("log.adapterMongo.pollingError", "MongoDB 轮询错误"),
-          error,
-        );
+        console.error($t("log.adapterMongo.pollingError"), error);
       }
     };
 
