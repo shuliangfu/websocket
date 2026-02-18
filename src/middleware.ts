@@ -5,6 +5,7 @@
 
 import type { Logger } from "@dreamer/logger";
 import { logger as defaultLogger } from "@dreamer/logger";
+import { $t } from "./i18n.ts";
 import type { Socket } from "./socket.ts";
 import type { Middleware } from "./types.ts";
 
@@ -23,22 +24,16 @@ export function authMiddleware(
       if (isValid) {
         next();
       } else {
+        const lang = socket.getServer()?.options?.lang;
         next(
-          new Error(
-            socket.getServer()?.tr?.(
-              "log.websocket.authFailed",
-              "认证失败",
-            ) ?? "认证失败",
-          ),
+          new Error($t("log.websocket.authFailed", undefined, lang)),
         );
       }
     } catch (error) {
+      const lang = socket.getServer()?.options?.lang;
       next(
         error instanceof Error ? error : new Error(
-          socket.getServer()?.tr?.(
-            "log.websocket.authError",
-            "认证错误",
-          ) ?? "认证错误",
+          $t("log.websocket.authError", undefined, lang),
         ),
       );
     }
@@ -55,19 +50,15 @@ export function loggerMiddleware(
   logger: Logger = defaultLogger,
 ): Middleware {
   return (socket, next) => {
-    const msg = socket.getServer()?.tr?.(
+    const lang = socket.getServer()?.options?.lang;
+    const msg = $t(
       "log.websocket.connectionEstablished",
-      `[WebSocket] 连接建立: ${socket.id} from ${
-        socket.handshake.address || "unknown"
-      }`,
       {
         socketId: socket.id,
         address: socket.handshake.address || "unknown",
       },
-    ) ??
-      `[WebSocket] 连接建立: ${socket.id} from ${
-        socket.handshake.address || "unknown"
-      }`;
+      lang,
+    );
     logger.info(msg);
     next();
   };
@@ -93,12 +84,10 @@ export function rateLimitMiddleware(options: {
     if (options.maxConnections) {
       const currentConnections = connectionCounts.get(address) || 0;
       if (currentConnections >= options.maxConnections) {
+        const lang = socket.getServer()?.options?.lang;
         return next(
           new Error(
-            socket.getServer()?.tr?.(
-              "log.websocket.connectionLimitExceeded",
-              "连接数超过限制",
-            ) ?? "连接数超过限制",
+            $t("log.websocket.connectionLimitExceeded", undefined, lang),
           ),
         );
       }
@@ -111,12 +100,10 @@ export function rateLimitMiddleware(options: {
       const messageInfo = messageCounts.get(socket.id);
       if (messageInfo && messageInfo.resetAt > now) {
         if (messageInfo.count >= options.maxMessagesPerSecond) {
+          const lang = socket.getServer()?.options?.lang;
           return next(
             new Error(
-              socket.getServer()?.tr?.(
-                "log.websocket.messageRateLimitExceeded",
-                "消息频率超过限制",
-              ) ?? "消息频率超过限制",
+              $t("log.websocket.messageRateLimitExceeded", undefined, lang),
             ),
           );
         }

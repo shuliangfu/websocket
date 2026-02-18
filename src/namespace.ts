@@ -3,16 +3,10 @@
  * 支持 WebSocket 命名空间，用于隔离不同业务场景
  */
 
+import { $t } from "./i18n.ts";
 import type { Server } from "./server.ts";
 import type { Socket } from "./socket.ts";
 import type { Middleware, ServerEventListener } from "./types.ts";
-
-/** 翻译函数类型 */
-type TrFn = (
-  key: string,
-  fallback: string,
-  params?: Record<string, string | number | boolean>,
-) => string;
 
 /**
  * 命名空间管理器
@@ -23,21 +17,14 @@ export class NamespaceManager {
   private namespaces: Map<string, Namespace> = new Map();
   /** 默认命名空间 */
   private defaultNamespace: Namespace;
-  /** 翻译函数（可选，用于 i18n） */
-  private tr: TrFn;
 
   /**
    * 创建命名空间管理器
    * @param defaultNamespace 默认命名空间
-   * @param tr 翻译函数（可选）
    */
-  constructor(
-    defaultNamespace: Namespace,
-    tr?: TrFn,
-  ) {
+  constructor(defaultNamespace: Namespace) {
     this.defaultNamespace = defaultNamespace;
     this.namespaces.set("/", defaultNamespace);
-    this.tr = tr ?? ((_k: string, fallback: string) => fallback);
   }
 
   /**
@@ -47,12 +34,7 @@ export class NamespaceManager {
    */
   of(name: string): Namespace {
     if (!name.startsWith("/")) {
-      throw new Error(
-        this.tr(
-          "log.websocket.namespaceNameMustStartWithSlash",
-          "命名空间名称必须以 '/' 开头",
-        ),
-      );
+      throw new Error($t("log.websocket.namespaceNameMustStartWithSlash"));
     }
 
     if (this.namespaces.has(name)) {
@@ -79,12 +61,7 @@ export class NamespaceManager {
    */
   delete(name: string): void {
     if (name === "/") {
-      throw new Error(
-        this.tr(
-          "log.websocket.cannotDeleteDefaultNamespace",
-          "不能删除默认命名空间",
-        ),
-      );
+      throw new Error($t("log.websocket.cannotDeleteDefaultNamespace"));
     }
     this.namespaces.delete(name);
   }

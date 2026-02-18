@@ -3,6 +3,7 @@
  * 用于缓冲和批量处理消息，优化大量连接场景下的性能
  */
 
+import { $t } from "./i18n.ts";
 import type { Socket } from "./socket.ts";
 
 /**
@@ -159,11 +160,13 @@ export class MessageQueue {
           }
         } catch (error) {
           // 忽略发送失败的错误（Socket 可能已断开），通过 onError 或 console 记录
-          const msg = item.socket.getServer()?.tr?.(
+          const server = item.socket.getServer();
+          const errMsg = error instanceof Error ? error.message : String(error);
+          const msg = $t(
             "log.websocket.messageSendFailed",
-            `消息发送失败: ${error}`,
-            { error: error instanceof Error ? error.message : String(error) },
-          ) ?? `消息发送失败: ${error}`;
+            { error: errMsg },
+            server?.options?.lang,
+          );
           if (this.onError) {
             this.onError(msg, error);
           } else {
