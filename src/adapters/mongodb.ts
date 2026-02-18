@@ -242,7 +242,6 @@ export class MongoDBAdapter implements WebSocketAdapter {
         errorMessage.includes("not a replica set") ||
         errorMessage.includes("No suitable servers found")
       ) {
-        const _url = this.buildConnectionUrl();
         throw new Error(
           $t("log.adapterMongo.connectFailedReplicaSet", {
             error: errorMessage,

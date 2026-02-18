@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.3] - 2026-02-18
+
+### Removed
+
+- **`tr` method and all references**: Server and middleware no longer expose or
+  use `tr`. I18n uses `$t(key, params, lang)` with `options.lang` only.
+- **Client `t` / `lang` options**: Client error messages are hardcoded in
+  English; no translation API.
+- **Adapter options `t`**: Adapter types and implementations use package `$t`
+  directly; the optional `t` callback was removed from adapter options.
+
+### Changed
+
+- **Middleware**: Replaced `socket.getServer()?.tr?.(...)` with
+  `$t(..., socket.getServer()?.options?.lang)` in auth, logger, rateLimit.
+- **Socket**: Sets locale in constructor via
+  `setWebSocketLocale(server.options.lang)`; all `$t` calls in Socket omit the
+  lang parameter (use current locale).
+- **MessageQueue**: Uses
+  `$t("log.websocket.messageSendFailed", { error }, server?.options?.lang)`.
+- **MongoDB adapter**: Removed unused variable in replica-set error path.
+
+### Fixed
+
+- **Tests**: MessageQueue onError test expects English "Message send failed";
+  logger/auth i18n test descriptions updated (no `server.tr` references).
+
+---
+
 ## [1.0.2] - 2026-02-18
 
 ### Changed

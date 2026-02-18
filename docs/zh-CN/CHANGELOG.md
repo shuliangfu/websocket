@@ -7,6 +7,33 @@
 
 ---
 
+## [1.0.3] - 2026-02-18
+
+### 移除
+
+- **`tr` 方法及所有引用**：服务端与中间件不再提供或使用 `tr`，i18n 仅通过
+  `$t(key, params, lang)` 配合 `options.lang` 使用。
+- **客户端 `t` / `lang` 选项**：客户端错误信息改为固定英文，不再提供翻译接口。
+- **适配器选项 `t`**：适配器类型与实现直接使用包内 `$t`，适配器选项中的可选 `t`
+  回调已移除。
+
+### 变更
+
+- **中间件**：auth、logger、rateLimit 中 `socket.getServer()?.tr?.(...)` 改为
+  `$t(..., socket.getServer()?.options?.lang)`。
+- **Socket**：在构造函数中通过 `setWebSocketLocale(server.options.lang)` 设置
+  语言；Socket 内所有 `$t` 调用不再传 lang，使用当前 locale。
+- **MessageQueue**：使用
+  `$t("log.websocket.messageSendFailed", { error }, server?.options?.lang)`。
+- **MongoDB 适配器**：副本集错误分支中移除未使用变量。
+
+### 修复
+
+- **测试**：MessageQueue onError 断言改为期望英文 "Message send
+  failed"；logger/auth i18n 相关测试描述更新（不再引用 `server.tr`）。
+
+---
+
 ## [1.0.2] - 2026-02-18
 
 ### 变更
