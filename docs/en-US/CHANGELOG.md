@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.4] - 2026-02-19
+
+### Changed
+
+- **i18n**: Renamed translation method from `$t` to `$tr` to avoid conflict with
+  global `$t`. Update existing code to use `$tr` for package messages.
+
+### Fixed
+
+- **Tests**: `logger-debug-i18n.test.ts` updated to use `$tr` instead of `$t`.
+  MessageQueue onError test now accepts both English and Chinese message (locale
+  may be en-US or zh-CN from environment).
+
+---
+
 ## [1.0.3] - 2026-02-18
 
 ### Removed

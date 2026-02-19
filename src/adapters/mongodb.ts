@@ -27,7 +27,7 @@
  * - 单节点副本集需要在 MongoDB 配置中启用副本集模式。
  */
 
-import { $t } from "../i18n.ts";
+import { $tr } from "../i18n.ts";
 import type { Socket } from "../socket.ts";
 import type { AdapterOptions, MessageData, WebSocketAdapter } from "./types.ts";
 
@@ -229,7 +229,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           error.message.includes("Failed to resolve") ||
           error.message.includes("Cannot find module"))
       ) {
-        throw new Error($t("log.adapterMongo.clientNotInstalled"));
+        throw new Error($tr("log.adapterMongo.clientNotInstalled"));
       }
 
       // 如果是副本集相关错误，提供更详细的提示
@@ -243,14 +243,14 @@ export class MongoDBAdapter implements WebSocketAdapter {
         errorMessage.includes("No suitable servers found")
       ) {
         throw new Error(
-          $t("log.adapterMongo.connectFailedReplicaSet", {
+          $tr("log.adapterMongo.connectFailedReplicaSet", {
             error: errorMessage,
           }),
         );
       }
 
       throw new Error(
-        $t("log.adapterMongo.connectFailed", { error: errorMessage }),
+        $tr("log.adapterMongo.connectFailed", { error: errorMessage }),
       );
     }
   }
@@ -326,7 +326,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
    */
   private async initializeCollections(): Promise<void> {
     if (!this.db) {
-      throw new Error($t("log.adapterMongo.databaseNotConnected"));
+      throw new Error($tr("log.adapterMongo.databaseNotConnected"));
     }
 
     // 房间集合（存储房间和 Socket 的关系）- 使用 keyPrefix 隔离不同应用
@@ -357,7 +357,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
       }
     } catch (error) {
       // 索引可能已存在，忽略错误
-      console.warn($t("log.adapterMongo.createIndexFailed"), error);
+      console.warn($tr("log.adapterMongo.createIndexFailed"), error);
     }
   }
 
@@ -518,7 +518,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
     callback: (message: MessageData, serverId: string) => void,
   ): Promise<void> | void {
     if (!this.messagesCollection) {
-      throw new Error($t("log.adapterMongo.messagesCollectionNotInitialized"));
+      throw new Error($tr("log.adapterMongo.messagesCollectionNotInitialized"));
     }
 
     // 更新 messageCallback（支持多次调用，覆盖之前的 callback）
@@ -580,7 +580,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
               }
             }
           } catch (error) {
-            console.error($t("log.adapterMongo.changeEventFailed"), error);
+            console.error($tr("log.adapterMongo.changeEventFailed"), error);
           }
         });
 
@@ -593,7 +593,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
             errorMessage.includes("replicaSet") ||
             errorMessage.includes("not a replica set")
           ) {
-            console.warn($t("log.adapterMongo.changeStreamsUnavailable"));
+            console.warn($tr("log.adapterMongo.changeStreamsUnavailable"));
             this.useChangeStreams = false;
             if (this.changeStream) {
               this.changeStream.close().catch(() => {});
@@ -601,7 +601,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
             }
             this.startPolling(callback);
           } else {
-            console.error($t("log.adapterMongo.changeStreamsError"), error);
+            console.error($tr("log.adapterMongo.changeStreamsError"), error);
           }
         });
 
@@ -616,7 +616,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           errorMessage.includes("replicaSet") ||
           errorMessage.includes("not a replica set")
         ) {
-          console.warn($t("log.adapterMongo.changeStreamsUnavailable"));
+          console.warn($tr("log.adapterMongo.changeStreamsUnavailable"));
           this.useChangeStreams = false;
           this.startPolling(callback);
           return Promise.resolve();
@@ -691,7 +691,7 @@ export class MongoDBAdapter implements WebSocketAdapter {
           processedIds = new Set(idsArray.slice(-500));
         }
       } catch (error) {
-        console.error($t("log.adapterMongo.pollingError"), error);
+        console.error($tr("log.adapterMongo.pollingError"), error);
       }
     };
 

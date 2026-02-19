@@ -5,7 +5,7 @@
 
 import { EncryptionManager } from "./encryption.ts";
 import { HeartbeatManager } from "./heartbeat.ts";
-import { $t, setWebSocketLocale } from "./i18n.ts";
+import { $tr, setWebSocketLocale } from "./i18n.ts";
 import { isEventMessage, parseMessage, serializeMessage } from "./message.ts";
 import type { Server } from "./server.ts";
 import type {
@@ -97,7 +97,7 @@ export class Socket {
   ) {
     if (!ws || typeof ws !== "object") {
       throw new Error(
-        $t("log.websocket.invalidSocketObject", { type: typeof ws }),
+        $tr("log.websocket.invalidSocketObject", { type: typeof ws }),
       );
     }
 
@@ -107,7 +107,7 @@ export class Socket {
       typeof (ws as any).onmessage === "undefined"
     ) {
       throw new Error(
-        $t("log.websocket.socketMissingMethodsConstructor"),
+        $tr("log.websocket.socketMissingMethodsConstructor"),
       );
     }
 
@@ -117,7 +117,7 @@ export class Socket {
     this.id = this.generateId();
     this.encryptionManager = encryptionManager;
 
-    // 设置当前连接使用的语言，使本 Socket 内所有 $t() 使用服务端配置的 lang
+    // 设置当前连接使用的语言，使本 Socket 内所有 $tr() 使用服务端配置的 lang
     if (this.server.options.lang !== undefined) {
       setWebSocketLocale(this.server.options.lang);
     }
@@ -227,7 +227,7 @@ export class Socket {
 
     if (!this.ws) {
       throw new Error(
-        $t("log.websocket.socketNotInitialized"),
+        $tr("log.websocket.socketNotInitialized"),
       );
     }
 
@@ -238,7 +238,7 @@ export class Socket {
       (this.ws as any).onmessage = messageHandler;
     } else {
       throw new Error(
-        $t("log.websocket.socketNoMessageListener", {
+        $tr("log.websocket.socketNoMessageListener", {
           type: typeof this.ws,
           keys: Object.keys(this.ws || {}).join(", "),
         }),
@@ -298,7 +298,7 @@ export class Socket {
             if (currentUploadId) {
               this.cleanupFileUpload(
                 currentUploadId,
-                $t("log.websocket.readFileChunkFailed"),
+                $tr("log.websocket.readFileChunkFailed"),
               );
             }
           };
@@ -346,7 +346,7 @@ export class Socket {
       });
 
       // 设置上传超时（30秒无新分片则清理）
-      const uploadTimeoutMsg = $t("log.websocket.uploadTimeout");
+      const uploadTimeoutMsg = $tr("log.websocket.uploadTimeout");
       const timeout = setTimeout(() => {
         this.cleanupFileUpload(uploadId, uploadTimeoutMsg);
       }, 30000) as unknown as number;
@@ -356,7 +356,7 @@ export class Socket {
       const existingTimeout = this.fileUploadTimers.get(uploadId);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
-        const uploadTimeoutMsg = $t("log.websocket.uploadTimeout");
+        const uploadTimeoutMsg = $tr("log.websocket.uploadTimeout");
         const newTimeout = setTimeout(() => {
           this.cleanupFileUpload(uploadId, uploadTimeoutMsg);
         }, 30000) as unknown as number;
@@ -409,11 +409,11 @@ export class Socket {
         // 如果缺少分片，触发错误事件
         this.emit("file-upload-error", {
           uploadId,
-          error: $t("log.websocket.missingChunk", { index: String(i) }),
+          error: $tr("log.websocket.missingChunk", { index: String(i) }),
         });
         this.cleanupFileUpload(
           uploadId,
-          $t("log.websocket.chunksIncomplete"),
+          $tr("log.websocket.chunksIncomplete"),
         );
         return;
       }
@@ -494,7 +494,7 @@ export class Socket {
             }).catch((err) => {
               // 忽略发送错误回调时的错误
               console.error(
-                $t("log.websocket.sendErrorCallbackFailed", {
+                $tr("log.websocket.sendErrorCallbackFailed", {
                   error: err instanceof Error ? err.message : String(err),
                 }),
                 err,

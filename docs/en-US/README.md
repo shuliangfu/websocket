@@ -688,8 +688,9 @@ See [client/README.md](./client/README.md) for WebSocket client usage.
 
 See [CHANGELOG.md](./CHANGELOG.md) for full history.
 
-**Latest (v1.0.2)**: License Apache 2.0. ServerOptions `lang` (i18n); docs
-restructured (en-US/zh-CN); TEST_REPORT translated to Chinese; 172 tests passed.
+**Latest (v1.0.4 - 2026-02-19)**: **Changed** – i18n `$t` → `$tr`. **Fixed** –
+tests use `$tr`; MessageQueue onError test accepts en/zh. See
+[CHANGELOG.md](./CHANGELOG.md).
 
 ---
 

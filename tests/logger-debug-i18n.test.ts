@@ -8,7 +8,7 @@ import type { Logger } from "@dreamer/logger";
 import { platform } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
-import { $t } from "../src/i18n.ts";
+import { $tr } from "../src/i18n.ts";
 import { authMiddleware, loggerMiddleware, Server } from "../src/mod.ts";
 import { createWebSocketClient, delay } from "./test-utils.ts";
 
@@ -171,12 +171,12 @@ describe("Server logger、debug、t 参数", () => {
         lang: "en-US",
       });
 
-      const result = $t("log.websocket.authFailed", undefined, "en-US");
+      const result = $tr("log.websocket.authFailed", undefined, "en-US");
       expect(result).toBe("Authentication failed");
     });
 
-    it("key 无翻译时 $t 返回 key 或库默认行为", () => {
-      const result = $t("some.unknown.key.not.in.locale", undefined, "en-US");
+    it("key 无翻译时 $tr 返回 key 或库默认行为", () => {
+      const result = $tr("some.unknown.key.not.in.locale", undefined, "en-US");
       expect(typeof result).toBe("string");
       expect(result.length).toBeGreaterThan(0);
     });
@@ -288,7 +288,7 @@ describe("authMiddleware lang 翻译参数", () => {
       server.listen();
       await delay(200);
 
-      const trResult = $t("log.websocket.authFailed", undefined, "en-US");
+      const trResult = $tr("log.websocket.authFailed", undefined, "en-US");
       expect(trResult).toBe("Authentication failed");
 
       await server.close();

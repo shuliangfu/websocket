@@ -765,8 +765,9 @@ WebSocket 客户端支持请查看 [client/README.md](./client/README.md)。
 
 详见 [CHANGELOG.md](./CHANGELOG.md)。
 
-**最新 (v1.0.2)**：许可证 Apache 2.0；ServerOptions 增加 `lang`（i18n）；文档
-拆分为 en-US/zh-CN；TEST_REPORT 中文翻译；172 个测试通过。
+**最新 (v1.0.4 - 2026-02-19)**：**变更** – i18n `$t` → `$tr`。**修复** –
+测试改用 `$tr`；MessageQueue onError 测试接受中英文。详见
+[CHANGELOG.md](./CHANGELOG.md)。
 
 ---
 

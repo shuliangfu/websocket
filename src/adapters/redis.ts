@@ -26,7 +26,7 @@ export interface RedisClient {
   /** 退出连接 */
   quit?: () => Promise<void> | void;
 }
-import { $t } from "../i18n.ts";
+import { $tr } from "../i18n.ts";
 import type { Socket } from "../socket.ts";
 import type { AdapterOptions, MessageData, WebSocketAdapter } from "./types.ts";
 
@@ -108,7 +108,7 @@ export class RedisAdapter implements WebSocketAdapter {
     } else if (options.client) {
       this.client = options.client;
     } else {
-      throw new Error($t("log.adapterRedis.needConnectionOrClient"));
+      throw new Error($tr("log.adapterRedis.needConnectionOrClient"));
     }
 
     if (options.pubsubConnection) {
@@ -143,7 +143,7 @@ export class RedisAdapter implements WebSocketAdapter {
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
         throw new Error(
-          $t("log.adapterRedis.cannotCreateClient", { error: errMsg }),
+          $tr("log.adapterRedis.cannotCreateClient", { error: errMsg }),
         );
       }
     }
@@ -219,7 +219,7 @@ export class RedisAdapter implements WebSocketAdapter {
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
         throw new Error(
-          $t("log.adapterRedis.cannotCreatePubSubClient", { error: errMsg }),
+          $tr("log.adapterRedis.cannotCreatePubSubClient", { error: errMsg }),
         );
       }
     }
@@ -303,7 +303,7 @@ export class RedisAdapter implements WebSocketAdapter {
    */
   async addSocketToRoom(socketId: string, room: string): Promise<void> {
     if (!this.client) {
-      throw new Error($t("log.adapterRedis.clientNotConnected"));
+      throw new Error($tr("log.adapterRedis.clientNotConnected"));
     }
 
     const roomKey = this.getKey(`room:${room}`);
@@ -485,7 +485,7 @@ export class RedisAdapter implements WebSocketAdapter {
           callback(data.message, data.serverId);
         }
       } catch (error) {
-        console.error($t("log.adapterRedis.parseMessageFailed"), error);
+        console.error($tr("log.adapterRedis.parseMessageFailed"), error);
       }
     });
 
@@ -498,7 +498,7 @@ export class RedisAdapter implements WebSocketAdapter {
           callback(data.message, data.serverId);
         }
       } catch (error) {
-        console.error($t("log.adapterRedis.parseRoomMessageFailed"), error);
+        console.error($tr("log.adapterRedis.parseRoomMessageFailed"), error);
       }
     });
   }

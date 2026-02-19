@@ -1,14 +1,13 @@
 /**
  * @module @dreamer/websocket/i18n
  *
- * 服务端 i18n：日志、错误等文案的国际化。
+ * 服务端 i18n：日志、错误等文案的国际化。不挂全局，各模块通过 import $tr 使用。
  * 未传 lang 时从环境变量（LANGUAGE/LC_ALL/LANG）自动检测语言。
  */
 
 import {
-  $i18n,
-  getGlobalI18n,
-  getI18n,
+  createI18n,
+  type I18n,
   type TranslationData,
   type TranslationParams,
 } from "@dreamer/i18n";
@@ -24,11 +23,16 @@ export const DEFAULT_LOCALE: Locale = "en-US";
 
 const WEBSOCKET_LOCALES: Locale[] = ["en-US", "zh-CN"];
 
-let websocketTranslationsLoaded = false;
+const LOCALE_DATA: Record<string, TranslationData> = {
+  "en-US": enUS as TranslationData,
+  "zh-CN": zhCN as TranslationData,
+};
+
+/** init 时创建的实例，不挂全局 */
+let websocketI18n: I18n | null = null;
 
 /**
  * 检测当前语言：LANGUAGE > LC_ALL > LANG。
- * 未设置或不在支持列表中时返回 DEFAULT_LOCALE。
  */
 export function detectLocale(): Locale {
   const langEnv = getEnv("LANGUAGE") || getEnv("LC_ALL") || getEnv("LANG");
@@ -49,50 +53,46 @@ export function detectLocale(): Locale {
 }
 
 /**
- * 将 websocket 文案加载到当前 I18n 实例（仅加载一次）。
- */
-export function ensureWebSocketI18n(): void {
-  if (websocketTranslationsLoaded) return;
-  const i18n = getGlobalI18n() ?? getI18n();
-  i18n.loadTranslations("en-US", enUS as TranslationData);
-  i18n.loadTranslations("zh-CN", zhCN as TranslationData);
-  websocketTranslationsLoaded = true;
-}
-
-/**
  * 加载文案并设置当前 locale。在入口（如 mod）中调用一次即可。
  */
 export function initWebSocketI18n(): void {
-  ensureWebSocketI18n();
-  $i18n.setLocale(detectLocale());
+  if (websocketI18n) return;
+  const i18n = createI18n({
+    defaultLocale: DEFAULT_LOCALE,
+    fallbackBehavior: "default",
+    locales: [...WEBSOCKET_LOCALES],
+    translations: LOCALE_DATA as Record<string, TranslationData>,
+  });
+  i18n.setLocale(detectLocale());
+  websocketI18n = i18n;
 }
 
 /**
  * 设置当前语言（供 Server 构造时 options.lang 使用）。
- * 调用后，$t() 将使用该 locale，无需每次传 lang。
  */
 export function setWebSocketLocale(lang: Locale): void {
-  ensureWebSocketI18n();
-  $i18n.setLocale(lang);
+  initWebSocketI18n();
+  if (websocketI18n) websocketI18n.setLocale(lang);
 }
 
 /**
- * 按 key 翻译。未传 lang 时使用当前 locale（在入口处已设置）。
+ * 框架专用翻译。未传 lang 时使用当前 locale。
  */
-export function $t(
+export function $tr(
   key: string,
   params?: TranslationParams,
   lang?: Locale,
 ): string {
-  ensureWebSocketI18n();
+  if (!websocketI18n) initWebSocketI18n();
+  if (!websocketI18n) return key;
   if (lang !== undefined) {
-    const prev = $i18n.getLocale();
-    $i18n.setLocale(lang);
+    const prev = websocketI18n.getLocale();
+    websocketI18n.setLocale(lang);
     try {
-      return $i18n.t(key, params);
+      return websocketI18n.t(key, params);
     } finally {
-      $i18n.setLocale(prev);
+      websocketI18n.setLocale(prev);
     }
   }
-  return $i18n.t(key, params);
+  return websocketI18n.t(key, params);
 }
