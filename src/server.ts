@@ -9,7 +9,7 @@ import {
   type ServeHandle,
   upgradeWebSocket,
 } from "@dreamer/runtime-adapter";
-import { $t, setWebSocketLocale } from "./i18n.ts";
+import { $tr, setWebSocketLocale } from "./i18n.ts";
 import { BatchHeartbeatManager } from "./batch-heartbeat.ts";
 import { EncryptionManager } from "./encryption.ts";
 import { MessageCache } from "./message-cache.ts";
@@ -236,7 +236,7 @@ export class Server {
     // 防止 Bun 等环境下传入空或无效 request.url 导致 new URL("") 抛错、未返回 Response
     if (!request.url || request.url === "") {
       return new Response(
-        $t("response.badRequest", undefined, this.options.lang),
+        $tr("response.badRequest", undefined, this.options.lang),
         {
           status: 400,
         },
@@ -247,7 +247,7 @@ export class Server {
       url = new URL(request.url);
     } catch {
       return new Response(
-        $t("response.badRequest", undefined, this.options.lang),
+        $tr("response.badRequest", undefined, this.options.lang),
         {
           status: 400,
         },
@@ -256,7 +256,7 @@ export class Server {
     const pathname = url.pathname;
 
     this.debugLog(
-      $t(
+      $tr(
         "log.websocket.requestReceived",
         { path: pathname, method: request.method },
         this.options.lang,
@@ -288,10 +288,14 @@ export class Server {
 
     if (!matchedNamespace) {
       this.debugLog(
-        $t("log.websocket.pathMismatch", { path: pathname }, this.options.lang),
+        $tr(
+          "log.websocket.pathMismatch",
+          { path: pathname },
+          this.options.lang,
+        ),
       );
       return new Response(
-        $t("response.notFound", undefined, this.options.lang),
+        $tr("response.notFound", undefined, this.options.lang),
         {
           status: 404,
         },
@@ -300,14 +304,18 @@ export class Server {
 
     try {
       this.debugLog(
-        $t("log.websocket.upgradeStart", { path: pathname }, this.options.lang),
+        $tr(
+          "log.websocket.upgradeStart",
+          { path: pathname },
+          this.options.lang,
+        ),
       );
       const upgradeResult = upgradeWebSocket(request);
       const { socket, response } = upgradeResult;
 
       if (!socket || typeof socket !== "object") {
         throw new Error(
-          $t(
+          $tr(
             "log.websocket.invalidSocketObject",
             { type: typeof socket },
             this.options.lang,
@@ -325,7 +333,7 @@ export class Server {
           Object.getPrototypeOf(socket || {}),
         );
         throw new Error(
-          $t("log.websocket.socketMissingMethods", {
+          $tr("log.websocket.socketMissingMethods", {
             adapterKeys: adapterKeys.join(", "),
             prototypeKeys: prototypeKeys.join(", "),
           }, this.options.lang),
@@ -353,7 +361,7 @@ export class Server {
         this.sockets.size >= this.options.maxConnections
       ) {
         return new Response(
-          $t("response.tooManyConnections", undefined, this.options.lang),
+          $tr("response.tooManyConnections", undefined, this.options.lang),
           { status: 503 },
         );
       }
@@ -394,7 +402,7 @@ export class Server {
       }
 
       this.debugLog(
-        $t(
+        $tr(
           "log.websocket.upgradeSuccess",
           { socketId: socketInstance.id, path: pathname },
           this.options.lang,
@@ -402,14 +410,14 @@ export class Server {
       );
       return response ||
         new Response(
-          $t("response.websocketUpgrade", undefined, this.options.lang),
+          $tr("response.websocketUpgrade", undefined, this.options.lang),
           {
             status: 101,
           },
         );
     } catch (err) {
       this.debugLog(
-        $t(
+        $tr(
           "log.websocket.upgradeFailed",
           {
             path: pathname,
@@ -419,7 +427,7 @@ export class Server {
         ),
       );
       return new Response(
-        $t("response.websocketUpgradeFailed", undefined, this.options.lang),
+        $tr("response.websocketUpgradeFailed", undefined, this.options.lang),
         { status: 500 },
       );
     }
@@ -890,7 +898,7 @@ export class Server {
               () =>
                 reject(
                   new Error(
-                    $t(
+                    $tr(
                       "log.websocket.serverCloseTimeout",
                       undefined,
                       this.options.lang,

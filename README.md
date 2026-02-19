@@ -12,8 +12,8 @@
 **Changelog**: [EN](./docs/en-US/CHANGELOG.md) |
 [中文](./docs/zh-CN/CHANGELOG.md)
 
-**Latest (v1.0.3 - 2026-02-18)**: Removed `tr` method; i18n uses `$t` with
-`options.lang` only. Client error messages hardcoded in English.
+**Latest (v1.0.4 - 2026-02-19)**: **Changed** – i18n `$t` → `$tr`. **Fixed** –
+tests use `$tr`; MessageQueue onError test accepts en/zh.
 [Full changelog](./docs/en-US/CHANGELOG.md).
 
 ---

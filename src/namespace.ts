@@ -3,7 +3,7 @@
  * 支持 WebSocket 命名空间，用于隔离不同业务场景
  */
 
-import { $t } from "./i18n.ts";
+import { $tr } from "./i18n.ts";
 import type { Server } from "./server.ts";
 import type { Socket } from "./socket.ts";
 import type { Middleware, ServerEventListener } from "./types.ts";
@@ -34,7 +34,7 @@ export class NamespaceManager {
    */
   of(name: string): Namespace {
     if (!name.startsWith("/")) {
-      throw new Error($t("log.websocket.namespaceNameMustStartWithSlash"));
+      throw new Error($tr("log.websocket.namespaceNameMustStartWithSlash"));
     }
 
     if (this.namespaces.has(name)) {
@@ -61,7 +61,7 @@ export class NamespaceManager {
    */
   delete(name: string): void {
     if (name === "/") {
-      throw new Error($t("log.websocket.cannotDeleteDefaultNamespace"));
+      throw new Error($tr("log.websocket.cannotDeleteDefaultNamespace"));
     }
     this.namespaces.delete(name);
   }

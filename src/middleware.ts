@@ -5,7 +5,7 @@
 
 import type { Logger } from "@dreamer/logger";
 import { logger as defaultLogger } from "@dreamer/logger";
-import { $t } from "./i18n.ts";
+import { $tr } from "./i18n.ts";
 import type { Socket } from "./socket.ts";
 import type { Middleware } from "./types.ts";
 
@@ -26,14 +26,14 @@ export function authMiddleware(
       } else {
         const lang = socket.getServer()?.options?.lang;
         next(
-          new Error($t("log.websocket.authFailed", undefined, lang)),
+          new Error($tr("log.websocket.authFailed", undefined, lang)),
         );
       }
     } catch (error) {
       const lang = socket.getServer()?.options?.lang;
       next(
         error instanceof Error ? error : new Error(
-          $t("log.websocket.authError", undefined, lang),
+          $tr("log.websocket.authError", undefined, lang),
         ),
       );
     }
@@ -51,7 +51,7 @@ export function loggerMiddleware(
 ): Middleware {
   return (socket, next) => {
     const lang = socket.getServer()?.options?.lang;
-    const msg = $t(
+    const msg = $tr(
       "log.websocket.connectionEstablished",
       {
         socketId: socket.id,
@@ -87,7 +87,7 @@ export function rateLimitMiddleware(options: {
         const lang = socket.getServer()?.options?.lang;
         return next(
           new Error(
-            $t("log.websocket.connectionLimitExceeded", undefined, lang),
+            $tr("log.websocket.connectionLimitExceeded", undefined, lang),
           ),
         );
       }
@@ -103,7 +103,7 @@ export function rateLimitMiddleware(options: {
           const lang = socket.getServer()?.options?.lang;
           return next(
             new Error(
-              $t("log.websocket.messageRateLimitExceeded", undefined, lang),
+              $tr("log.websocket.messageRateLimitExceeded", undefined, lang),
             ),
           );
         }

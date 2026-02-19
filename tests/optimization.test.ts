@@ -150,8 +150,10 @@ describe("MessageQueue 消息队列", () => {
     let errorCalled = false;
     const queue = new MessageQueue(10, 5, 1, (msg, err) => {
       errorCalled = true;
-      // message-queue 使用 $t("log.websocket.messageSendFailed")，未传 lang 时为英文
-      expect(msg).toContain("Message send failed");
+      // message-queue 使用 $tr("log.websocket.messageSendFailed")，locale 可能为 en 或 zh
+      expect(
+        msg.includes("Message send failed") || msg.includes("消息发送失败"),
+      ).toBe(true);
       expect(err).toBeInstanceOf(Error);
     });
     queue.enqueue(mockSocket, "fail-event");

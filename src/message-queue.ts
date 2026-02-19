@@ -3,7 +3,7 @@
  * 用于缓冲和批量处理消息，优化大量连接场景下的性能
  */
 
-import { $t } from "./i18n.ts";
+import { $tr } from "./i18n.ts";
 import type { Socket } from "./socket.ts";
 
 /**
@@ -162,7 +162,7 @@ export class MessageQueue {
           // 忽略发送失败的错误（Socket 可能已断开），通过 onError 或 console 记录
           const server = item.socket.getServer();
           const errMsg = error instanceof Error ? error.message : String(error);
-          const msg = $t(
+          const msg = $tr(
             "log.websocket.messageSendFailed",
             { error: errMsg },
             server?.options?.lang,
