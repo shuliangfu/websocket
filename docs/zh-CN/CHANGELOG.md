@@ -1,3 +1,12 @@
+## [1.0.5] - 2026-02-20
+
+### 变更
+
+- i18n：模块加载时自动初始化（不再导出 `initWebSocketI18n`）。依赖：bump
+  @dreamer/crypto、@dreamer/test、@dreamer/runtime-adapter、@dreamer/logger。
+
+---
+
 # 变更日志
 
 本项目的所有重要变更都将记录在此文件中。
