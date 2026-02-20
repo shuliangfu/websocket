@@ -1,3 +1,13 @@
+## [1.0.5] - 2026-02-20
+
+### Changed
+
+- i18n: auto-init on module load (no longer export `initWebSocketI18n`).
+  Dependencies: bump @dreamer/crypto, @dreamer/test, @dreamer/runtime-adapter,
+  @dreamer/logger.
+
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
