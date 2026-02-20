@@ -12,8 +12,9 @@
 **Changelog**: [EN](./docs/en-US/CHANGELOG.md) |
 [中文](./docs/zh-CN/CHANGELOG.md)
 
-**Latest (v1.0.5 - 2026-02-20)**: **Changed** – i18n auto-init on module load;
-dependency bumps. tests use `$tr`; MessageQueue onError test accepts en/zh.
+**Latest (v1.0.6 - 2026-02-20)**: **Added** – Client self-contained (encryption,
+message, client in src/client/). **Changed** – Client uses
+@dreamer/crypto/client; server encryption same.
 [Full changelog](./docs/en-US/CHANGELOG.md).
 
 ---

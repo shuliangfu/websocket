@@ -1,3 +1,22 @@
+## [1.0.6] - 2026-02-20
+
+### 新增
+
+- **客户端自包含**：新增
+  `src/client/encryption.ts`、`src/client/message.ts`、`src/client/client.ts`。客户端加密与消息解析/序列化现均在
+  `src/client/` 下，仅使用
+  `@dreamer/crypto/client`，客户端入口不依赖服务端或根模块，适合浏览器打包。
+
+### 变更
+
+- **客户端入口**（`src/client/mod.ts`）：改为 barrel，仅从
+  `./types.ts`、`./encryption.ts`、`./message.ts`、`./client.ts`
+  再导出；客户端逻辑已迁至 `client.ts`。
+- **服务端加密**（`src/encryption.ts`）：从 `@dreamer/crypto/client` 引入
+  `decrypt`/`encrypt`，与客户端一致并避免打包带入 i18n。
+
+---
+
 ## [1.0.5] - 2026-02-20
 
 ### 变更

@@ -1,3 +1,24 @@
+## [1.0.6] - 2026-02-20
+
+### Added
+
+- **Client self-contained**: New `src/client/encryption.ts`,
+  `src/client/message.ts`, and `src/client/client.ts`. Client encryption and
+  message parse/serialize now live under `src/client/` and use only
+  `@dreamer/crypto/client`, so the client entry has no dependency on server or
+  root modules and is safe for browser bundling.
+
+### Changed
+
+- **Client entry** (`src/client/mod.ts`): Now a barrel that re-exports from
+  `./types.ts`, `./encryption.ts`, `./message.ts`, `./client.ts`. Client logic
+  moved into `client.ts`.
+- **Server encryption** (`src/encryption.ts`): Imports `decrypt`/`encrypt` from
+  `@dreamer/crypto/client` to keep API consistent and avoid pulling i18n into
+  any bundle that uses encryption.
+
+---
+
 ## [1.0.5] - 2026-02-20
 
 ### Changed
