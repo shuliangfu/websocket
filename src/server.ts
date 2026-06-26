@@ -10,6 +10,7 @@ import {
   upgradeWebSocket,
 } from "@dreamer/runtime-adapter";
 import { $tr, setWebSocketLocale } from "./i18n.ts";
+import { MemoryAdapter } from "./adapters/memory.ts";
 import { BatchHeartbeatManager } from "./batch-heartbeat.ts";
 import { EncryptionManager } from "./encryption.ts";
 import { MessageCache } from "./message-cache.ts";
@@ -70,6 +71,15 @@ export class Server {
   private debugLog(message: string): void {
     if (this.options.debug === true) {
       this.logger.debug(`[WebSocket] ${message}`);
+    }
+  }
+
+  /**
+   * 调试日志（延迟求值，避免 debug 关闭时仍执行 $tr 等开销）
+   */
+  private debugLogLazy(getMessage: () => string): void {
+    if (this.options.debug === true) {
+      this.logger.debug(`[WebSocket] ${getMessage()}`);
     }
   }
 
@@ -195,11 +205,26 @@ export class Server {
   }
 
   /**
+   * 同步确保内存适配器存在（WebSocket 升级须在 HTTP 回调同 tick 返回 101，不可先 await）
+   */
+  private ensureAdapterSync(): void {
+    if (!this.adapter) {
+      this.adapter = new MemoryAdapter();
+    }
+  }
+
+  /**
+   * 挂载模式预初始化：异步完成 subscribe 等，在首条升级前调用
+   */
+  async prepare(): Promise<void> {
+    await this.ensureAdapter();
+  }
+
+  /**
    * 确保适配器已初始化（用于挂载模式，不调用 listen 时延迟初始化）
    */
   private async ensureAdapter(): Promise<void> {
     if (!this.adapter) {
-      const { MemoryAdapter } = await import("./adapters/memory.ts");
       this.adapter = new MemoryAdapter();
     }
     if (this.adapter?.init) {
@@ -222,48 +247,9 @@ export class Server {
   }
 
   /**
-   * 处理单个 HTTP 请求（挂载模式）
-   *
-   * 用于将 WebSocket 服务挂载到现有 HTTP 服务器（如 dweb 框架）。
-   * 当请求路径匹配 options.path 且为 WebSocket 升级请求时，完成升级并返回响应。
-   *
-   * @param request 原始 HTTP 请求
-   * @returns 响应（升级成功返回 101，否则返回 404/500）
+   * 按 pathname 匹配命名空间
    */
-  async handleRequest(request: Request): Promise<Response> {
-    await this.ensureAdapter();
-
-    // 防止 Bun 等环境下传入空或无效 request.url 导致 new URL("") 抛错、未返回 Response
-    if (!request.url || request.url === "") {
-      return new Response(
-        $tr("response.badRequest", undefined, this.options.lang),
-        {
-          status: 400,
-        },
-      );
-    }
-    let url: URL;
-    try {
-      url = new URL(request.url);
-    } catch {
-      return new Response(
-        $tr("response.badRequest", undefined, this.options.lang),
-        {
-          status: 400,
-        },
-      );
-    }
-    const pathname = url.pathname;
-
-    this.debugLog(
-      $tr(
-        "log.websocket.requestReceived",
-        { path: pathname, method: request.method },
-        this.options.lang,
-      ),
-    );
-
-    let matchedNamespace: Namespace | null = null;
+  private matchNamespaceForPath(pathname: string): Namespace | null {
     const allNamespaces = this.namespaceManager.getAll();
     const sortedNamespaces = allNamespaces
       .map((name) => this.namespaceManager.of(name))
@@ -272,47 +258,117 @@ export class Server {
     for (const namespace of sortedNamespaces) {
       if (namespace.name === "/") {
         if (pathname === this.options.path) {
-          matchedNamespace = namespace;
-          break;
+          return namespace;
         }
-      } else {
-        if (
-          pathname === namespace.name ||
-          pathname.startsWith(namespace.name + "/")
-        ) {
-          matchedNamespace = namespace;
-          break;
-        }
+      } else if (
+        pathname === namespace.name ||
+        pathname.startsWith(namespace.name + "/")
+      ) {
+        return namespace;
       }
     }
+    return null;
+  }
 
-    if (!matchedNamespace) {
-      this.debugLog(
-        $tr(
-          "log.websocket.pathMismatch",
-          { path: pathname },
-          this.options.lang,
-        ),
-      );
+  /**
+   * 取出须原样返回的升级响应（Deno 须返回 upgradeWebSocket 原始 response）
+   */
+  private toUpgradeResponse(response: Response | undefined): Response {
+    if (response !== undefined) {
+      return response;
+    }
+    // Bun 下 response 可能为 undefined，由运行时处理
+    return new Response(null, { status: 101 });
+  }
+
+  /**
+   * 同步处理 WebSocket 升级（Deno/Bun 须在同一 tick 返回 101 Response，不可 await 后再 return）
+   * 连接中间件与 connection 事件在 {@link finishConnectionSetup} 中异步完成。
+   *
+   * @param request 原始 HTTP 请求
+   * @returns 升级响应（101）或错误响应
+   */
+  handleUpgrade(request: Request): Response {
+    // 升级前须读完 request（upgradeWebSocket 之后 request 即关闭）
+    let pathname = "";
+    let handshake: Handshake;
+    try {
+      const url = new URL(request.url);
+      pathname = url.pathname;
+      handshake = {
+        query: Object.fromEntries(url.searchParams as any),
+        headers: request.headers,
+        address: request.headers.get("x-forwarded-for") || undefined,
+        url: request.url,
+      };
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       return new Response(
-        $tr("response.notFound", undefined, this.options.lang),
-        {
-          status: 404,
-        },
+        $tr("response.websocketUpgradeFailed", undefined, this.options.lang) +
+          `: ${errMsg}`,
+        { status: 400 },
       );
     }
 
-    try {
-      this.debugLog(
-        $tr(
-          "log.websocket.upgradeStart",
-          { path: pathname },
-          this.options.lang,
-        ),
+    const matchedNamespace = pathname
+      ? this.matchNamespaceForPath(pathname)
+      : null;
+    if (!matchedNamespace) {
+      return new Response(
+        $tr("response.notFound", undefined, this.options.lang),
+        { status: 404 },
       );
-      const upgradeResult = upgradeWebSocket(request);
-      const { socket, response } = upgradeResult;
+    }
 
+    if (
+      this.options.maxConnections &&
+      this.sockets.size >= this.options.maxConnections
+    ) {
+      return new Response(
+        $tr("response.tooManyConnections", undefined, this.options.lang),
+        { status: 503 },
+      );
+    }
+
+    this.ensureAdapterSync();
+
+    // Deno：upgradeWebSocket 后须立即 return 101，Socket 创建放到 microtask
+    let upgradeResult: ReturnType<typeof upgradeWebSocket>;
+    try {
+      upgradeResult = upgradeWebSocket(request);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return new Response(
+        $tr("response.websocketUpgradeFailed", undefined, this.options.lang) +
+          `: ${errMsg}`,
+        { status: 500 },
+      );
+    }
+
+    const { socket, response } = upgradeResult;
+
+    queueMicrotask(() => {
+      void this.setupSocketAfterUpgrade(
+        socket,
+        handshake,
+        matchedNamespace,
+        pathname,
+      );
+    });
+
+    return this.toUpgradeResponse(response);
+  }
+
+  /**
+   * 101 响应返回后创建 Socket 并执行中间件与 connection 事件（Deno 不可在 return 101 前 addEventListener）
+   */
+  private async setupSocketAfterUpgrade(
+    socket: any,
+    handshake: Handshake,
+    matchedNamespace: Namespace,
+    pathname: string,
+  ): Promise<void> {
+    try {
       if (!socket || typeof socket !== "object") {
         throw new Error(
           $tr(
@@ -340,13 +396,6 @@ export class Server {
         );
       }
 
-      const handshake: Handshake = {
-        query: Object.fromEntries(url.searchParams as any),
-        headers: request.headers,
-        address: request.headers.get("x-forwarded-for") || undefined,
-        url: request.url,
-      };
-
       const socketInstance = new Socket(
         socket as any,
         this,
@@ -355,18 +404,43 @@ export class Server {
       );
 
       this.adapterToSocket.set(socket, socketInstance);
-
-      if (
-        this.options.maxConnections &&
-        this.sockets.size >= this.options.maxConnections
-      ) {
-        return new Response(
-          $tr("response.tooManyConnections", undefined, this.options.lang),
-          { status: 503 },
-        );
-      }
-
       this.roomManager.registerSocket(socketInstance.id, socketInstance);
+
+      this.debugLogLazy(() =>
+        $tr(
+          "log.websocket.upgradeSuccess",
+          { socketId: socketInstance.id, path: pathname },
+          this.options.lang,
+        )
+      );
+
+      await this.finishConnectionSetup(socketInstance, matchedNamespace);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      this.debugLogLazy(() =>
+        $tr(
+          "log.websocket.upgradeFailed",
+          { path: pathname, error: errMsg },
+          this.options.lang,
+        )
+      );
+      try {
+        (socket as WebSocket).close(1011, errMsg);
+      } catch {
+        // 忽略
+      }
+    }
+  }
+
+  /**
+   * 升级成功后异步执行中间件与 connection 事件（不可阻塞 101 响应返回）
+   */
+  private async finishConnectionSetup(
+    socketInstance: Socket,
+    matchedNamespace: Namespace,
+  ): Promise<void> {
+    try {
+      await this.ensureAdapter();
       await this.executeMiddlewares(socketInstance);
 
       const namespaceMiddlewares = matchedNamespace.getMiddlewares();
@@ -396,41 +470,40 @@ export class Server {
       this.emit("connection", socketInstance);
       matchedNamespace.emitConnection(socketInstance);
 
-      // 若使用批量心跳，将 Socket 加入批量心跳管理器
       if (this.batchHeartbeatManager) {
         this.batchHeartbeatManager.add(socketInstance);
       }
-
-      this.debugLog(
-        $tr(
-          "log.websocket.upgradeSuccess",
-          { socketId: socketInstance.id, path: pathname },
-          this.options.lang,
-        ),
-      );
-      return response ||
-        new Response(
-          $tr("response.websocketUpgrade", undefined, this.options.lang),
-          {
-            status: 101,
-          },
-        );
     } catch (err) {
       this.debugLog(
         $tr(
           "log.websocket.upgradeFailed",
           {
-            path: pathname,
+            path: socketInstance.handshake.url,
             error: err instanceof Error ? err.message : String(err),
           },
           this.options.lang,
         ),
       );
-      return new Response(
-        $tr("response.websocketUpgradeFailed", undefined, this.options.lang),
-        { status: 500 },
-      );
+      try {
+        socketInstance.disconnect("connection setup failed");
+      } catch {
+        // 忽略关闭失败
+      }
     }
+  }
+
+  /**
+   * 处理单个 HTTP 请求（挂载模式）
+   *
+   * **注意**：Deno 下 WebSocket 升级须通过 {@link handleUpgrade} 同步返回 101，
+   * 不可经中间件 `await handleRequest()`；应使用 HTTP 的 `onWebSocket` 注册。
+   *
+   * @param request 原始 HTTP 请求
+   * @returns 响应（升级成功返回 101，否则返回 404/500）
+   */
+  async handleRequest(request: Request): Promise<Response> {
+    await this.ensureAdapter();
+    return this.handleUpgrade(request);
   }
 
   /**
@@ -450,7 +523,7 @@ export class Server {
         port: serverPort,
         host: serverHost === "0.0.0.0" ? undefined : serverHost,
       },
-      (request: Request) => this.handleRequest(request),
+      (request: Request) => this.handleUpgrade(request),
     );
   }
 

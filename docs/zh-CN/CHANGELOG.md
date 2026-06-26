@@ -1,3 +1,28 @@
+## [1.0.7] - 2026-06-26
+
+### 修复
+
+- **Deno WebSocket 升级（`handleUpgrade`）**：在 `upgradeWebSocket()`
+  前读取握手信息，同步返回原始 101 响应，并通过 microtask 延迟创建 Socket
+  与中间件/connection 事件。修复配合 `@dreamer/runtime-adapter@1.0.19` 时的
+  `Upgrade response was not returned
+  from callback` 及 `connection`
+  不触发问题。
+- **测试**：`encryption.test.ts` 中定时器句柄改为
+  `ReturnType<typeof setInterval>`（兼容 Deno `Timeout` 类型）。
+
+### 新增
+
+- **`Server.prepare()`**：挂载模式下在首条 WebSocket 升级前异步预初始化适配器
+  （subscribe/init）。
+
+### 变更
+
+- **依赖**：升级 `@dreamer/runtime-adapter` 至 `^1.0.19`，`@dreamer/logger` 至
+  `^1.0.3`，`@dreamer/test` 至 `^1.1.8`。
+
+---
+
 ## [1.0.6] - 2026-02-20
 
 ### 新增

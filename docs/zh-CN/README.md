@@ -765,9 +765,9 @@ WebSocket 客户端支持请查看 [client/README.md](./client/README.md)。
 
 详见 [CHANGELOG.md](./CHANGELOG.md)。
 
-**最新 (v1.0.4 - 2026-02-19)**：**变更** – i18n `$t` → `$tr`。**修复** –
-测试改用 `$tr`；MessageQueue onError 测试接受中英文。详见
-[CHANGELOG.md](./CHANGELOG.md)。
+**最新 (v1.0.7 - 2026-06-26)**：**修复** – Deno 下同步 WebSocket 101
+升级；**新增** – `Server.prepare()`；**变更** –
+`@dreamer/runtime-adapter@^1.0.19`。详见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ---
 

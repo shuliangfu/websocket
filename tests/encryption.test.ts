@@ -385,7 +385,7 @@ describe("WebSocket 加密 - 服务端", () => {
             }, 100);
           });
           // 监听消息接收
-          let checkInterval: number | undefined;
+          let checkInterval: ReturnType<typeof setInterval> | undefined;
           const checkReceived = () => {
             if (receivedData) {
               if (checkInterval) clearInterval(checkInterval);
@@ -453,7 +453,7 @@ describe("WebSocket 加密 - 服务端", () => {
               }, 200);
             }, 100);
             // 监听消息接收
-            let checkInterval: number | undefined;
+            let checkInterval: ReturnType<typeof setInterval> | undefined;
             const checkReceived = () => {
               if (receivedMessages.length >= 3) {
                 if (checkInterval) clearInterval(checkInterval);
@@ -573,7 +573,7 @@ describe("WebSocket 加密 - 客户端", () => {
                 client.emit("client-message", { text: "from client" });
               }, 200);
             }, 100);
-            let checkInterval: number | undefined;
+            let checkInterval: ReturnType<typeof setInterval> | undefined;
             const checkReceived = () => {
               if (receivedData) {
                 if (checkInterval) clearInterval(checkInterval);
@@ -949,7 +949,7 @@ describe("WebSocket 加密 - 端到端", () => {
                 client.emit("test", { message: "string key test" });
               }, 200);
             }, 100);
-            let checkInterval: number | undefined;
+            let checkInterval: ReturnType<typeof setInterval> | undefined;
             const checkReceived = () => {
               if (receivedData) {
                 if (checkInterval) clearInterval(checkInterval);
@@ -1032,7 +1032,7 @@ describe("WebSocket 加密 - 端到端", () => {
                 client.emit("test", { message: "password derived key" });
               }, 200);
             }, 100);
-            let checkInterval: number | undefined;
+            let checkInterval: ReturnType<typeof setInterval> | undefined;
             const checkReceived = () => {
               if (receivedData) {
                 if (checkInterval) clearInterval(checkInterval);
@@ -1106,7 +1106,7 @@ describe("WebSocket 加密 - 混合场景", () => {
               client.emit("test", { message: "encrypted from client" });
             }, 200);
           }, 100);
-          let checkInterval: number | undefined;
+          let checkInterval: ReturnType<typeof setInterval> | undefined;
           const checkReceived = () => {
             if (receivedData) {
               if (checkInterval) clearInterval(checkInterval);
@@ -1243,7 +1243,7 @@ describe("WebSocket 加密 - 性能测试", () => {
               }
             }, 300);
           }, 100);
-          let checkInterval: number | undefined;
+          let checkInterval: ReturnType<typeof setInterval> | undefined;
           const checkReceived = () => {
             if (receivedMessages.length >= 100) {
               if (checkInterval) clearInterval(checkInterval);
@@ -1497,7 +1497,7 @@ describe("WebSocket 加密 - 边界情况", () => {
                 client.sendBinary(binaryData);
               }, 400);
             }, 200);
-            let checkInterval: number | undefined;
+            let checkInterval: ReturnType<typeof setInterval> | undefined;
             const checkReceived = () => {
               if (receivedBinary) {
                 if (checkInterval) clearInterval(checkInterval);

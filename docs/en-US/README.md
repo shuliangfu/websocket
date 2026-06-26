@@ -688,9 +688,9 @@ See [client/README.md](./client/README.md) for WebSocket client usage.
 
 See [CHANGELOG.md](./CHANGELOG.md) for full history.
 
-**Latest (v1.0.4 - 2026-02-19)**: **Changed** – i18n `$t` → `$tr`. **Fixed** –
-tests use `$tr`; MessageQueue onError test accepts en/zh. See
-[CHANGELOG.md](./CHANGELOG.md).
+**Latest (v1.0.7 - 2026-06-26)**: **Fixed** – Deno sync WebSocket 101 upgrade;
+**Added** – `Server.prepare()`. **Changed** –
+`@dreamer/runtime-adapter@^1.0.19`. See [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 

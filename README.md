@@ -12,9 +12,9 @@
 **Changelog**: [EN](./docs/en-US/CHANGELOG.md) |
 [中文](./docs/zh-CN/CHANGELOG.md)
 
-**Latest (v1.0.6 - 2026-02-20)**: **Added** – Client self-contained (encryption,
-message, client in src/client/). **Changed** – Client uses
-@dreamer/crypto/client; server encryption same.
+**Latest (v1.0.7 - 2026-06-26)**: **Fixed** – Deno sync WebSocket 101 upgrade
+via `handleUpgrade()`; **Added** – `Server.prepare()` for mount mode;
+**Changed** – `@dreamer/runtime-adapter@^1.0.19`.
 [Full changelog](./docs/en-US/CHANGELOG.md).
 
 ---

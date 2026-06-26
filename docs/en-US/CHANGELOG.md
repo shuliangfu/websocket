@@ -1,3 +1,27 @@
+## [1.0.7] - 2026-06-26
+
+### Fixed
+
+- **Deno WebSocket upgrade (`handleUpgrade`)**: Read handshake data before
+  `upgradeWebSocket()`, return the original 101 response synchronously, and
+  defer Socket creation plus middleware/connection setup to a microtask. Fixes
+  `Upgrade response was not returned from callback` and `connection` events not
+  firing when used with `@dreamer/runtime-adapter@1.0.19`.
+- **Tests**: `encryption.test.ts` uses `ReturnType<typeof setInterval>` for
+  timer handles (Deno `Timeout` type compatibility).
+
+### Added
+
+- **`Server.prepare()`**: Async pre-initialization for mount mode (adapter
+  subscribe/init) before the first WebSocket upgrade.
+
+### Changed
+
+- **Dependencies**: Bump `@dreamer/runtime-adapter` to `^1.0.19`,
+  `@dreamer/logger` to `^1.0.3`, `@dreamer/test` to `^1.1.8`.
+
+---
+
 ## [1.0.6] - 2026-02-20
 
 ### Added
