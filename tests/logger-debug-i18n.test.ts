@@ -8,9 +8,13 @@ import type { Logger } from "@dreamer/logger";
 import { platform } from "@dreamer/runtime-adapter";
 import { describe, expect, it } from "@dreamer/test";
 import { MongoDBAdapter } from "../src/adapters/mongodb.ts";
-import { $tr } from "../src/i18n.ts";
+import { $tr, setWebSocketLocale } from "../src/i18n.ts";
 import { authMiddleware, loggerMiddleware, Server } from "../src/mod.ts";
 import { createWebSocketClient, delay } from "./test-utils.ts";
+
+// 锁定英文 locale：本测试断言 $tr 返回英文文案（"Authentication failed"），
+// 显式锁定 en-US 确保在任何 CI/开发机 locale 下确定性通过（en-US 亦为默认 locale）。
+setWebSocketLocale("en-US");
 
 const isWindows = platform() === "windows";
 

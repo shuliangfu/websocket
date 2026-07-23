@@ -2,47 +2,65 @@
 
 ## 测试概览
 
-- **测试库版本**：@dreamer/test@^1.0.0-beta.40
-- **测试框架**：@dreamer/test（兼容 Deno 与 Bun）
-- **测试日期**：2026-02-18
+- **包版本**：@dreamer/websocket@1.1.0
+- **测试库版本**：@dreamer/test@^1.2.3
+- **运行时适配器**：@dreamer/runtime-adapter@^1.2.2
+- **测试框架**：@dreamer/test（兼容 Deno、Bun、Node.js）
+- **测试日期**：2026-07-23
 - **测试环境**：
-  - **Deno**：2.6.4
-  - **Bun**：1.3.5
+  - **Deno**：2.9+
+  - **Bun**：1.3+
+  - **Node.js**：22+
+  - **CI**：9 作业矩阵（Deno / Bun / Node × Linux / macOS / Windows）
 
 ## 测试结果
 
 ### 汇总统计
 
-- **测试总数**：172
-- **通过**：172 ✅
-- **失败**：0
-- **通过率**：100% ✅
-- **执行时间**：
-  - Deno：约 105 秒（1 分 45 秒）
-  - Bun：约 105 秒
+单元测试套件（14 个文件）跨运行时结果：
+
+| 运行时  | 用例数 | 通过    | 失败 | 通过率   |
+| ------- | ------ | ------- | ---- | -------- |
+| Deno    | 158    | 158 ✅  | 0    | 100% ✅  |
+| Bun     | 143    | 143 ✅  | 0    | 100% ✅  |
+| Node.js | 143    | 143 ✅  | 0    | 100% ✅  |
+
+- **通过率**：100% ✅（三个运行时均 0 失败）
+
+> Deno 原生 runner 对相同测试文件会计更多 step（嵌套 step 计数差异），
+> 故 Deno 总数更高，但覆盖的用例相同。
 
 ### 测试文件统计
 
-| 测试文件                    | 用例数 | Deno 状态   | Bun 状态    | 说明                                  |
-| --------------------------- | ------ | ----------- | ----------- | ------------------------------------- |
-| `adapters-mongodb.test.ts`  | 7      | ✅ 全部通过 | ✅ 全部通过 | MongoDB 分布式适配器                  |
-| `adapters-redis.test.ts`    | 7      | ✅ 全部通过 | ✅ 全部通过 | Redis 分布式适配器                    |
-| `connection.test.ts`        | 6      | ✅ 全部通过 | ✅ 全部通过 | WebSocket 连接与消息处理              |
-| `data-storage.test.ts`      | 2      | ✅ 全部通过 | ✅ 全部通过 | Socket 数据存储                       |
-| `disconnect.test.ts`        | 4      | ✅ 全部通过 | ✅ 全部通过 | Socket 断开处理                       |
-| `encryption.test.ts`        | 57     | ✅ 全部通过 | ✅ 全部通过 | 消息加密                              |
-| `error-handling.test.ts`    | 3      | ✅ 全部通过 | ✅ 全部通过 | 错误处理                              |
-| `heartbeat.test.ts`         | 3      | ✅ 全部通过 | ✅ 全部通过 | 心跳检测                              |
-| `logger-debug-i18n.test.ts` | 12     | ✅ 全部通过 | ✅ 全部通过 | logger、debug、lang 参数与 i18n       |
-| `middleware.test.ts`        | 13     | ✅ 全部通过 | ✅ 全部通过 | 中间件系统                            |
-| `namespace.test.ts`         | 9      | ✅ 全部通过 | ✅ 全部通过 | 命名空间功能                          |
-| `optimization.test.ts`      | 22     | ✅ 全部通过 | ✅ 全部通过 | 优化（MessageCache、MessageQueue 等） |
-| `room.test.ts`              | 8      | ✅ 全部通过 | ✅ 全部通过 | 房间管理                              |
-| `runtime-compat.test.ts`    | 3      | ✅ 全部通过 | ✅ 全部通过 | 跨运行时兼容性                        |
-| `server.test.ts`            | 11     | ✅ 全部通过 | ✅ 全部通过 | 服务端功能                            |
-| `socket-events.test.ts`     | 5      | ✅ 全部通过 | ✅ 全部通过 | Socket 事件系统                       |
+#### 单元测试（CI 运行 — 14 个文件）
 
-**合计**：16 个测试文件，172 个用例，全部通过 ✅
+| 测试文件                    | 用例数 | Deno | Bun  | Node | 说明                                  |
+| --------------------------- | ------ | ---- | ---- | ---- | ------------------------------------- |
+| `connection.test.ts`        | 6      | ✅   | ✅   | ✅   | WebSocket 连接与消息处理              |
+| `data-storage.test.ts`      | 2      | ✅   | ✅   | ✅   | Socket 数据存储                       |
+| `disconnect.test.ts`        | 4      | ✅   | ✅   | ✅   | Socket 断开处理                       |
+| `encryption.test.ts`        | 57     | ✅   | ✅   | ✅   | 消息加密                              |
+| `error-handling.test.ts`    | 3      | ✅   | ✅   | ✅   | 错误处理                              |
+| `heartbeat.test.ts`         | 3      | ✅   | ✅   | ✅   | 心跳检测                              |
+| `logger-debug-i18n.test.ts` | 12     | ✅   | ✅   | ✅   | logger、debug、lang 参数与 i18n       |
+| `middleware.test.ts`        | 13     | ✅   | ✅   | ✅   | 中间件系统                            |
+| `namespace.test.ts`         | 9      | ✅   | ✅   | ✅   | 命名空间功能                          |
+| `optimization.test.ts`      | 22     | ✅   | ✅   | ✅   | 优化（MessageCache、MessageQueue 等） |
+| `room.test.ts`              | 8      | ✅   | ✅   | ✅   | 房间管理                              |
+| `runtime-compat.test.ts`    | 3      | ✅   | ✅   | ✅   | 跨运行时兼容性                        |
+| `server.test.ts`            | 11     | ✅   | ✅   | ✅   | 服务端功能                            |
+| `socket-events.test.ts`     | 5      | ✅   | ✅   | ✅   | Socket 事件系统                       |
+
+**单元合计**：14 个测试文件，158 个用例，全部通过 ✅
+
+#### 集成测试（需在线服务 — CI 不运行，`test:integration` 任务）
+
+| 测试文件                   | 用例数 | 服务           | 说明                  |
+| -------------------------- | ------ | -------------- | --------------------- |
+| `adapters-mongodb.test.ts` | 7      | MongoDB 27017  | MongoDB 分布式适配器  |
+| `adapters-redis.test.ts`   | 7      | Redis 6379     | Redis 分布式适配器    |
+
+**集成合计**：2 个测试文件，14 个用例（本地配合在线服务运行）
 
 ## 功能模块测试覆盖
 
@@ -467,19 +485,24 @@
 
 ### Deno 环境
 
-- **用例数**：172
-- **通过**：172 ✅
+- **用例数**：158
+- **通过**：158 ✅
 - **失败**：0
-- **执行时间**：约 105 秒（1 分 45 秒）
 
 ### Bun 环境
 
-- **用例数**：172
-- **通过**：172 ✅
+- **用例数**：143
+- **通过**：143 ✅
 - **失败**：0
-- **执行时间**：约 105 秒（1 分 45 秒）
 
-**兼容性结论**：✅ 与 Deno、Bun 运行时完全兼容
+### Node.js 环境
+
+- **用例数**：143
+- **通过**：143 ✅
+- **失败**：0
+- **运行器**：`tsx --test`（Node 22 原生测试运行器）
+
+**兼容性结论**：✅ 与 Deno、Bun、Node.js 22+ 运行时完全兼容
 
 ## 性能测试
 
@@ -573,8 +596,8 @@
 @dreamer/websocket 具备较完整的测试覆盖，各功能模块均经过测试。结论如下：
 
 1. **功能完整**：✅ 核心功能均已实现并通过测试
-2. **跨运行时**：✅ 与 Deno、Bun 完全兼容
-3. **稳定性**：✅ 两种环境下用例全部通过（172/172）
+2. **跨运行时**：✅ 与 Deno、Bun、Node.js 22+ 完全兼容
+3. **稳定性**：✅ 三个运行时用例全部通过（Deno 158 / Bun 143 / Node 143）
 4. **性能**：✅ 连接与消息处理表现良好
 5. **加密**：✅ 完整加密支持，多算法与密钥管理
 6. **分布式**：✅ Redis、MongoDB 适配器支持多机场景
@@ -594,6 +617,19 @@ deno test -A
 
 ```bash
 bun test
+```
+
+### Node.js 22+
+
+```bash
+npm install
+npm run test:node
+```
+
+### 集成测试（需在线 MongoDB / Redis）
+
+```bash
+npm run test:integration
 ```
 
 ## 测试文件列表
@@ -617,6 +653,6 @@ bun test
 
 ---
 
-**报告生成时间**：2026-02-18\
+**报告生成时间**：2026-07-23\
 **测试框架**：@dreamer/test\
-**测试状态**：✅ 全部通过（172/172）
+**测试状态**：✅ 全部通过（Deno 158 / Bun 143 / Node 143）

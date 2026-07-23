@@ -518,7 +518,9 @@ export class Server {
     // 使用 ?? 支持 port 0（系统自动分配），避免 || 将 0 误判为未指定
     const serverPort = port ?? this.options.port ?? 8080;
 
-    this.httpServer = serve(
+    // Node 下 runtime-adapter serve() 返回 Promise<ServeHandle>（端口绑定异步完成），
+    // 须 await 否则 this.httpServer 为 Promise、后续 shutdown() 失败，同 socket-io/upload 模式
+    this.httpServer = await serve(
       {
         port: serverPort,
         host: serverHost === "0.0.0.0" ? undefined : serverHost,

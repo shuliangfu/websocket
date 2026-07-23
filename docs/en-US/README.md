@@ -1,13 +1,13 @@
 # @dreamer/websocket
 
-> WebSocket utility library compatible with Deno and Bun. WebSocket server with
-> real-time bidirectional communication.
+> WebSocket utility library compatible with Deno, Bun, and Node.js 22+. WebSocket
+> server with real-time bidirectional communication.
 
 [English](./README.md) · [中文 (Chinese)](../zh-CN/README.md)
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../../LICENSE)
-[![Tests](https://img.shields.io/badge/tests-172%20passed-brightgreen)](./TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-143%20passed%20(3%20runtimes)-brightgreen)](./TEST_REPORT.md)
 
 ---
 
@@ -21,7 +21,7 @@ online collaboration, and more.
 ## ✨ Characteristics
 
 - **Cross-runtime WebSocket API**:
-  - Native WebSocket server support for Deno and Bun
+  - Native WebSocket server support for Deno, Bun, and Node.js 22+
   - Unified WebSocket API abstraction
 - **Connection management**:
   - Connection establishment and teardown
@@ -81,7 +81,7 @@ online collaboration, and more.
 
 __All @dreamer/_ libraries follow these principles_*:
 
-- **Main package (@dreamer/xxx)**: Server-side (Deno and Bun)
+- **Main package (@dreamer/xxx)**: Server-side (Deno, Bun, Node.js)
 - **Client subpackage (@dreamer/xxx/client)**: Client-side (browser)
 
 Benefits:
@@ -117,15 +117,22 @@ deno add jsr:@dreamer/websocket
 bunx jsr add @dreamer/websocket
 ```
 
+### Node.js 22+
+
+```bash
+npx jsr add @dreamer/websocket
+```
+
 ---
 
 ## 🌍 Compatibility
 
 | Environment      | Version | Status                                                     |
 | ---------------- | ------- | ---------------------------------------------------------- |
-| **Deno**         | 2.5+    | ✅ Fully supported                                         |
-| **Bun**          | 1.0+    | ✅ Fully supported                                         |
-| **Server**       | -       | ✅ Supported (Deno/Bun, WebSocket server)                  |
+| **Deno**         | 2.9+    | ✅ Fully supported                                         |
+| **Bun**          | 1.3+    | ✅ Fully supported                                         |
+| **Node.js**      | 22+     | ✅ Fully supported                                         |
+| **Server**       | -       | ✅ Supported (Deno/Bun/Node, WebSocket server)             |
 | **Client**       | -       | ✅ Supported (browser via `jsr:@dreamer/websocket/client`) |
 | **Dependencies** | -       | 📦 @dreamer/runtime-adapter (cross-runtime)                |
 
@@ -688,17 +695,18 @@ See [client/README.md](./client/README.md) for WebSocket client usage.
 
 See [CHANGELOG.md](./CHANGELOG.md) for full history.
 
-**Latest (v1.0.7 - 2026-06-26)**: **Fixed** – Deno sync WebSocket 101 upgrade;
-**Added** – `Server.prepare()`. **Changed** –
-`@dreamer/runtime-adapter@^1.0.19`. See [CHANGELOG.md](./CHANGELOG.md).
+**Latest (v1.1.0 - 2026-07-23)**: **Added** – Node.js 22+ compatibility
+(MongoDB adapter lazy-loaded, `serve()` awaited); integration tests split out.
+**Changed** – deps bumped, locale lock, lint scope to `src/`. See
+[CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
 ## 📊 Tests
 
-- **Tests**: 172 test cases, all passed
+- **Tests**: Deno 158 / Bun 143 / Node 143, all passed (0 failures)
 - **Report**: [TEST_REPORT.md](./TEST_REPORT.md)
-- **Run**: `deno test -A tests` or `bun test tests`
+- **Run**: `deno test -A tests`, `bun test tests`, or `npm run test:node`
 
 ---
 
@@ -708,7 +716,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for full history.
 - **Unified API**: Same API for server and client
 - **Socket.IO-like API**: Familiar API design
 - **Message encryption**: Built-in encryption, multiple algorithms
-- **Cross-runtime**: Native Deno and Bun support, no Node.js
+- **Cross-runtime**: Native Deno, Bun, and Node.js 22+ support
 - **Type-safe**: Full TypeScript support
 - **With @dreamer/http**: Use HTTP and WebSocket in the same app
 

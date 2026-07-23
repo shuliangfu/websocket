@@ -1,3 +1,44 @@
+## [1.1.0] - 2026-07-23
+
+### 新增
+
+- **Node.js 22+ 兼容**：本包现可在 Deno、Bun、Node.js 22+ 上运行，通过
+  @dreamer/runtime-adapter 提供统一 API。
+  - **MongoDB 适配器懒加载**：`src/adapters/mongodb.ts` 在 `connectMongoDB()`
+    内改用动态 `await import("mongodb")`，取代顶层 import，使 mongodb npm 包不再
+    经 `adapters/mod.ts` → `src/mod.ts` 静态 re-export 链被 eager 加载。避免 Bun
+    模块加载失败与 Node 无谓安装（同 queue / socket-io / session 模式）。Redis 适配器
+    本就已懒加载。
+  - **`serve()` 改为 await**：`Server#listen()` 现对 runtime-adapter 的 `serve()`
+    调用加 `await`。Node 下 `serve()` 返回 `Promise<ServeHandle>`（端口绑定异步完成），
+    不 await 会使 `this.httpServer` 为 Promise、`shutdown()` 失败（同 socket-io / upload）。
+  - **Node.js 工具链**：新增 `package.json`（engines.node>=22、`test:node` 走 tsx）、
+    `tsconfig.json`（module ESNext / moduleResolution Bundler）、`.npmrc`（@jsr registry）。
+  - **9 作业 CI 矩阵**：Deno 2.9 / Bun 1.3 / Node 22 × Linux、macOS、Windows。
+
+### 变更
+
+- **依赖**：升级 `@dreamer/i18n` 至 `^1.1.2`、`@dreamer/test` 至 `^1.2.3`、
+  `@dreamer/crypto` 至 `^1.1.0`、`@dreamer/runtime-adapter` 至 `^1.2.2`、
+  `@dreamer/logger` 至 `^1.1.0`。
+- **集成测试拆分**：`tests/adapters-mongodb.test.ts` 与 `tests/adapters-redis.test.ts`
+  （需在线 MongoDB / Redis）移至 `test:integration` 任务；CI 仅运行 14 个单元测试文件。
+- **Locale 锁定**：`tests/logger-debug-i18n.test.ts` 显式锁定
+  `setWebSocketLocale("en-US")`，因其断言英文 `$tr` 文案，确保任何 CI/开发机 locale 下
+  确定性通过。
+- **Lint 范围**：仅 `deno lint src/`（既有测试 lint 债务不计）。
+
+### 兼容性
+
+- Deno 2.9+、Bun 1.3+、Node.js 22+
+
+### 测试
+
+- Deno 158 / Bun 143 / Node 143（0 失败）。Deno 原生 runner 对相同文件会计更多 step
+  （嵌套 step 计数差异）。
+
+---
+
 ## [1.0.7] - 2026-06-26
 
 ### 修复

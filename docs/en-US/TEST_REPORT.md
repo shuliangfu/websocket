@@ -2,47 +2,66 @@
 
 ## Test Overview
 
-- **Test Library Version**: @dreamer/test@^1.0.0-beta.40
-- **Test Framework**: @dreamer/test (compatible with Deno and Bun)
-- **Test Date**: 2026-02-18
+- **Package Version**: @dreamer/websocket@1.1.0
+- **Test Library Version**: @dreamer/test@^1.2.3
+- **Runtime Adapter**: @dreamer/runtime-adapter@^1.2.2
+- **Test Framework**: @dreamer/test (compatible with Deno, Bun, and Node.js)
+- **Test Date**: 2026-07-23
 - **Test Environment**:
-  - **Deno**: 2.6.4
-  - **Bun**: 1.3.5
+  - **Deno**: 2.9+
+  - **Bun**: 1.3+
+  - **Node.js**: 22+
+  - **CI**: 9-job matrix (Deno / Bun / Node × Linux / macOS / Windows)
 
 ## Test Results
 
 ### Summary Statistics
 
-- **Total Tests**: 172
-- **Passed**: 172 ✅
-- **Failed**: 0
-- **Pass Rate**: 100% ✅
-- **Execution Time**:
-  - Deno: ~105 seconds (1m45s)
-  - Bun: ~105 seconds
+Cross-runtime results for the unit test suite (14 files):
+
+| Runtime | Tests | Passed | Failed | Pass Rate |
+| ------- | ----- | ------ | ------ | --------- |
+| Deno    | 158   | 158 ✅ | 0      | 100% ✅   |
+| Bun     | 143   | 143 ✅ | 0      | 100% ✅   |
+| Node.js | 143   | 143 ✅ | 0      | 100% ✅   |
+
+- **Pass Rate**: 100% ✅ (all three runtimes, 0 failures)
+
+> Deno's native runner counts more steps than Bun/Node for the same test files
+> (nested step accounting), so the Deno total is higher while covering the same
+> cases.
 
 ### Test File Statistics
 
-| Test File                   | Tests | Deno Status | Bun Status  | Description                                     |
-| --------------------------- | ----- | ----------- | ----------- | ----------------------------------------------- |
-| `adapters-mongodb.test.ts`  | 7     | ✅ All Pass | ✅ All Pass | MongoDB distributed adapter                     |
-| `adapters-redis.test.ts`    | 7     | ✅ All Pass | ✅ All Pass | Redis distributed adapter                       |
-| `connection.test.ts`        | 6     | ✅ All Pass | ✅ All Pass | WebSocket connection and message handling       |
-| `data-storage.test.ts`      | 2     | ✅ All Pass | ✅ All Pass | Socket data storage                             |
-| `disconnect.test.ts`        | 4     | ✅ All Pass | ✅ All Pass | Socket disconnect handling                      |
-| `encryption.test.ts`        | 57    | ✅ All Pass | ✅ All Pass | Message encryption                              |
-| `error-handling.test.ts`    | 3     | ✅ All Pass | ✅ All Pass | Error handling                                  |
-| `heartbeat.test.ts`         | 3     | ✅ All Pass | ✅ All Pass | Heartbeat detection                             |
-| `logger-debug-i18n.test.ts` | 12    | ✅ All Pass | ✅ All Pass | logger, debug, lang parameter and i18n          |
-| `middleware.test.ts`        | 13    | ✅ All Pass | ✅ All Pass | Middleware system                               |
-| `namespace.test.ts`         | 9     | ✅ All Pass | ✅ All Pass | Namespace functionality                         |
-| `optimization.test.ts`      | 22    | ✅ All Pass | ✅ All Pass | Optimization (MessageCache, MessageQueue, etc.) |
-| `room.test.ts`              | 8     | ✅ All Pass | ✅ All Pass | Room management                                 |
-| `runtime-compat.test.ts`    | 3     | ✅ All Pass | ✅ All Pass | Cross-runtime compatibility                     |
-| `server.test.ts`            | 11    | ✅ All Pass | ✅ All Pass | Server functionality                            |
-| `socket-events.test.ts`     | 5     | ✅ All Pass | ✅ All Pass | Socket event system                             |
+#### Unit tests (run in CI — 14 files)
 
-**Total**: 16 test files, 172 test cases, all passed ✅
+| Test File                   | Tests | Deno | Bun  | Node | Description                                     |
+| --------------------------- | ----- | ---- | ---- | ---- | ----------------------------------------------- |
+| `connection.test.ts`        | 6     | ✅   | ✅   | ✅   | WebSocket connection and message handling       |
+| `data-storage.test.ts`      | 2     | ✅   | ✅   | ✅   | Socket data storage                             |
+| `disconnect.test.ts`        | 4     | ✅   | ✅   | ✅   | Socket disconnect handling                      |
+| `encryption.test.ts`        | 57    | ✅   | ✅   | ✅   | Message encryption                              |
+| `error-handling.test.ts`    | 3     | ✅   | ✅   | ✅   | Error handling                                  |
+| `heartbeat.test.ts`         | 3     | ✅   | ✅   | ✅   | Heartbeat detection                             |
+| `logger-debug-i18n.test.ts` | 12    | ✅   | ✅   | ✅   | logger, debug, lang parameter and i18n          |
+| `middleware.test.ts`        | 13    | ✅   | ✅   | ✅   | Middleware system                               |
+| `namespace.test.ts`         | 9     | ✅   | ✅   | ✅   | Namespace functionality                         |
+| `optimization.test.ts`      | 22    | ✅   | ✅   | ✅   | Optimization (MessageCache, MessageQueue, etc.) |
+| `room.test.ts`              | 8     | ✅   | ✅   | ✅   | Room management                                 |
+| `runtime-compat.test.ts`    | 3     | ✅   | ✅   | ✅   | Cross-runtime compatibility                     |
+| `server.test.ts`            | 11    | ✅   | ✅   | ✅   | Server functionality                            |
+| `socket-events.test.ts`     | 5     | ✅   | ✅   | ✅   | Socket event system                             |
+
+**Unit total**: 14 test files, 158 test cases, all passed ✅
+
+#### Integration tests (require live services — not run in CI, `test:integration` task)
+
+| Test File                  | Tests | Service        | Description              |
+| -------------------------- | ----- | -------------- | ------------------------ |
+| `adapters-mongodb.test.ts` | 7     | MongoDB 27017  | MongoDB distributed adapter |
+| `adapters-redis.test.ts`   | 7     | Redis 6379     | Redis distributed adapter   |
+
+**Integration total**: 2 test files, 14 test cases (run locally with live services)
 
 ## Feature Module Test Coverage
 
@@ -467,19 +486,25 @@
 
 ### Deno Environment
 
-- **Tests**: 172
-- **Passed**: 172 ✅
+- **Tests**: 158
+- **Passed**: 158 ✅
 - **Failed**: 0
-- **Execution Time**: ~105 seconds (1m45s)
 
 ### Bun Environment
 
-- **Tests**: 172
-- **Passed**: 172 ✅
+- **Tests**: 143
+- **Passed**: 143 ✅
 - **Failed**: 0
-- **Execution Time**: ~105 seconds (1m45s)
 
-**Compatibility Conclusion**: ✅ Fully compatible with Deno and Bun runtimes
+### Node.js Environment
+
+- **Tests**: 143
+- **Passed**: 143 ✅
+- **Failed**: 0
+- **Runner**: `tsx --test` (Node 22 native test runner)
+
+**Compatibility Conclusion**: ✅ Fully compatible with Deno, Bun, and Node.js
+22+ runtimes
 
 ## Performance Tests
 
@@ -579,8 +604,10 @@
 thoroughly tested. Results show:
 
 1. **Feature completeness**: ✅ All core features implemented and tested
-2. **Cross-runtime compatibility**: ✅ Fully compatible with Deno and Bun
-3. **Stability**: ✅ All tests pass in both environments (172/172)
+2. **Cross-runtime compatibility**: ✅ Fully compatible with Deno, Bun, and
+   Node.js 22+
+3. **Stability**: ✅ All tests pass in all three runtimes (Deno 158 / Bun 143 /
+   Node 143)
 4. **Performance**: ✅ Good connection and message handling performance
 5. **Encryption**: ✅ Full encryption support, multiple algorithms and key
    management
@@ -602,6 +629,19 @@ deno test -A
 
 ```bash
 bun test
+```
+
+### Node.js 22+
+
+```bash
+npm install
+npm run test:node
+```
+
+### Integration tests (require live MongoDB / Redis)
+
+```bash
+npm run test:integration
 ```
 
 ## Test File List
@@ -626,5 +666,5 @@ bun test
 
 ---
 
-**Report Generated**: 2026-02-18 **Test Framework**: @dreamer/test **Test
-Status**: ✅ All Passed (172/172)
+**Report Generated**: 2026-07-23 **Test Framework**: @dreamer/test **Test
+Status**: ✅ All Passed (Deno 158 / Bun 143 / Node 143)

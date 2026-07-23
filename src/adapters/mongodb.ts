@@ -31,9 +31,6 @@ import { $tr } from "../i18n.ts";
 import type { Socket } from "../socket.ts";
 import type { AdapterOptions, MessageData, WebSocketAdapter } from "./types.ts";
 
-// 静态导入 MongoDB 客户端（需要安装 mongodb 包：deno add npm:mongodb）
-import { MongoClient } from "mongodb";
-
 /**
  * MongoDB 连接配置
  */
@@ -212,7 +209,9 @@ export class MongoDBAdapter implements WebSocketAdapter {
    */
   private async connectMongoDB(): Promise<void> {
     try {
-      // 使用静态导入的 MongoClient
+      // 动态导入 MongoDB 客户端，避免顶层 import 经 adapters/mod.ts 静态 re-export 链
+      // eager 加载 mongodb（Bun 模块加载失败、Node 无谓安装），同 queue/socket-io/session 模式
+      const { MongoClient } = await import("mongodb");
       const url = this.buildConnectionUrl();
       this.internalClient = new MongoClient(url);
       await this.internalClient.connect();

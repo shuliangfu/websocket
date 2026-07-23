@@ -1,13 +1,13 @@
 # @dreamer/websocket
 
-> 一个兼容 Deno 和 Bun 的 WebSocket 工具包，提供 WebSocket
+> 一个兼容 Deno、Bun、Node.js 22+ 的 WebSocket 工具包，提供 WebSocket
 > 服务器功能，支持实时双向通信
 
 [English](../en-US/README.md) · 中文 (Chinese)
 
 [![JSR](https://jsr.io/badges/@dreamer/websocket)](https://jsr.io/@dreamer/websocket)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../../LICENSE)
-[![Tests](https://img.shields.io/badge/tests-172%20passed-brightgreen)](./TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-143%20passed%20(3%20runtimes)-brightgreen)](./TEST_REPORT.md)
 
 ---
 
@@ -20,7 +20,7 @@ WebSocket 工具包，用于构建实时通信应用、推送服务、在线协�
 ## ✨ 特性
 
 - **跨运行时 WebSocket API**：
-  - 兼容 Deno 和 Bun 的原生 WebSocket 服务器支持
+  - 兼容 Deno、Bun、Node.js 22+ 的原生 WebSocket 服务器支持
   - 统一的 WebSocket API 抽象层
 - **连接管理**：
   - 连接建立和关闭处理
@@ -80,7 +80,7 @@ WebSocket 工具包，用于构建实时通信应用、推送服务、在线协�
 
 __所有 @dreamer/_ 包都遵循以下原则_*：
 
-- **主包（@dreamer/xxx）**：用于服务端（兼容 Deno 和 Bun 运行时）
+- **主包（@dreamer/xxx）**：用于服务端（兼容 Deno、Bun、Node.js 运行时）
 - **客户端子包（@dreamer/xxx/client）**：用于客户端（浏览器环境）
 
 这样可以：
@@ -116,15 +116,22 @@ deno add jsr:@dreamer/websocket
 bunx jsr add @dreamer/websocket
 ```
 
+### Node.js 22+
+
+```bash
+npx jsr add @dreamer/websocket
+```
+
 ---
 
 ## 🌍 环境兼容性
 
 | 环境       | 版本要求 | 状态                                                                                  |
 | ---------- | -------- | ------------------------------------------------------------------------------------- |
-| **Deno**   | 2.5+     | ✅ 完全支持                                                                           |
-| **Bun**    | 1.0+     | ✅ 完全支持                                                                           |
-| **服务端** | -        | ✅ 支持（兼容 Deno 和 Bun 运行时，WebSocket 服务器功能）                              |
+| **Deno**   | 2.9+     | ✅ 完全支持                                                                           |
+| **Bun**    | 1.3+     | ✅ 完全支持                                                                           |
+| **Node.js**| 22+      | ✅ 完全支持                                                                           |
+| **服务端** | -        | ✅ 支持（兼容 Deno/Bun/Node 运行时，WebSocket 服务器功能）                            |
 | **客户端** | -        | ✅ 支持（浏览器环境，通过 `jsr:@dreamer/websocket/client` 使用 WebSocket 客户端功能） |
 | **依赖**   | -        | 📦 @dreamer/runtime-adapter（用于跨运行时兼容）                                       |
 
@@ -765,17 +772,17 @@ WebSocket 客户端支持请查看 [client/README.md](./client/README.md)。
 
 详见 [CHANGELOG.md](./CHANGELOG.md)。
 
-**最新 (v1.0.7 - 2026-06-26)**：**修复** – Deno 下同步 WebSocket 101
-升级；**新增** – `Server.prepare()`；**变更** –
-`@dreamer/runtime-adapter@^1.0.19`。详见 [CHANGELOG.md](./CHANGELOG.md)。
+**最新 (v1.1.0 - 2026-07-23)**：**新增** – Node.js 22+ 兼容（MongoDB 适配器
+懒加载、`serve()` 改为 await）；集成测试拆分。**变更** – 依赖升级、locale 锁定、
+lint 范围限 `src/`。详见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ---
 
 ## 📊 测试
 
-- **测试数量**：172 个测试用例，全部通过
+- **测试数量**：Deno 158 / Bun 143 / Node 143，全部通过（0 失败）
 - **测试报告**：详见 [TEST_REPORT.md](./TEST_REPORT.md)
-- **运行测试**：`deno test -A tests` 或 `bun test tests`
+- **运行测试**：`deno test -A tests`、`bun test tests` 或 `npm run test:node`
 
 ---
 
@@ -786,7 +793,7 @@ WebSocket 客户端支持请查看 [client/README.md](./client/README.md)。
 - **类似 socket.io 的 API**：采用类似 socket.io 的 API
   设计，提供更友好的开发体验
 - **消息加密**：内置消息加密功能，支持多种加密算法
-- **跨运行时支持**：原生支持 Deno 和 Bun 运行时，无需 Node.js
+- **跨运行时支持**：原生支持 Deno、Bun、Node.js 22+ 运行时
 - **类型安全**：完整的 TypeScript 类型支持
 - **与 @dreamer/http 配合使用**：可以在同一个应用中同时提供 HTTP 和 WebSocket
   服务

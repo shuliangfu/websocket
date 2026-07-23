@@ -1,3 +1,49 @@
+## [1.1.0] - 2026-07-23
+
+### Added
+
+- **Node.js 22+ compatibility**: The package now runs on Deno, Bun, and Node.js
+  22+ with a unified API via @dreamer/runtime-adapter.
+  - **MongoDB adapter lazy-loaded**: `src/adapters/mongodb.ts` now uses a dynamic
+    `await import("mongodb")` inside `connectMongoDB()` instead of a top-level
+    import, so the mongodb npm package is no longer eagerly loaded through the
+    `adapters/mod.ts` → `src/mod.ts` static re-export chain. This avoids failed
+    module loading on Bun and unnecessary installs on Node (same pattern as
+    queue / socket-io / session). The Redis adapter was already lazy-loaded.
+  - **`serve()` awaited**: `Server#listen()` now `await`s the `serve()` call from
+    runtime-adapter. Under Node, `serve()` returns `Promise<ServeHandle>` because
+    port binding is asynchronous; without `await`, `this.httpServer` was a
+    Promise and `shutdown()` failed (same fix as socket-io / upload).
+  - **Node.js tooling**: Added `package.json` (engines.node>=22, `test:node`
+    via tsx), `tsconfig.json` (module ESNext / moduleResolution Bundler), and
+    `.npmrc` (@jsr registry).
+  - **9-job CI matrix**: Deno 2.9 / Bun 1.3 / Node 22 across Linux, macOS,
+    Windows.
+
+### Changed
+
+- **Dependencies**: Bump `@dreamer/i18n` to `^1.1.2`, `@dreamer/test` to
+  `^1.2.3`, `@dreamer/crypto` to `^1.1.0`, `@dreamer/runtime-adapter` to
+  `^1.2.2`, `@dreamer/logger` to `^1.1.0`.
+- **Integration tests split out**: `tests/adapters-mongodb.test.ts` and
+  `tests/adapters-redis.test.ts` (require live MongoDB / Redis) moved to the
+  `test:integration` task; CI runs the 14 unit test files only.
+- **Locale lock**: `tests/logger-debug-i18n.test.ts` explicitly locks
+  `setWebSocketLocale("en-US")` because it asserts English `$tr` output, ensuring
+  deterministic passes regardless of CI/developer locale.
+- **Lint scope**: `deno lint src/` only (pre-existing test-lint debt excluded).
+
+### Compatibility
+
+- Deno 2.9+, Bun 1.3+, Node.js 22+
+
+### Tests
+
+- Deno 158 / Bun 143 / Node 143 (0 failures). Deno's native runner counts more
+  steps than Bun/Node for the same files (nested step accounting).
+
+---
+
 ## [1.0.7] - 2026-06-26
 
 ### Fixed
